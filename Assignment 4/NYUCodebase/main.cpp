@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 #ifdef _WINDOWS
 	glewInit();
 #endif
-	float maximumTick = 100;
+	float maximumTick = .5;
 	SDL_Event event;
 	bool done = false;
 	//setup
@@ -131,75 +131,84 @@ int main(int argc, char *argv[])
 	//set up game
 	GLuint sheet = loadImage("sprite sheet.png");
 	GLuint font = loadImage("font.png");
-	Level level(8, 8, 16, sheet);
+	Level level("level1.txt");
+	level.setTexture(sheet,4,4);
 	std::vector<Entity> e;
 	e.push_back(Entity());
 	e[0].makePlayer();
 	e[0].setTexture(sheet, 3, 4, 4);
-		while (!done) {
-			while (SDL_PollEvent(&event)) {
-				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
-					done = true;
-				} 
-				if (event.type == SDL_KEYDOWN)
+	while (!done) {
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
+				done = true;
+			}
+			if (event.type == SDL_KEYDOWN)
+			{
+				switch (event.key.keysym.sym)
 				{
-					switch (event.key.keysym.sym)
-					{
-					case SDLK_RETURN:
 
-						break;
-					case SDLK_r:
-		
-						break;
-					case SDLK_LEFT:
-						
-						break;
-					case SDLK_RIGHT:
-						break;
+				case SDLK_SPACE:
+					e[0].speedY = 100;
+					break;
+				case SDLK_r:
 
-					}
-				}
-				if (event.type == SDL_KEYUP)
-				{
-					switch (event.key.keysym.sym)
-					{
-					case SDLK_LEFT:
-						if (e[0].accelX < 0)
-						{
-							e[0].accelX = 0;
-						}
-						break;
-					case SDLK_RIGHT:
-						if (e[0].accelX > 0)
-						{
-							e[0].accelX = 0;
-						}
-						break;
-					case SDLK_SPACE:
-						break;
+					break;
+				case SDLK_LEFT:
+					e[0].accelX = -100;
+					break;
+				case SDLK_RIGHT:
+					e[0].accelX = 100;
+					break;
 
-					}
 				}
 			}
-		
-	
-			//tick
-			float totalTime = (float)SDL_GetTicks() / 1000;
-			float tick = totalTime - lastFrameTime;
-			
-			lastFrameTime = totalTime;
+			if (event.type == SDL_KEYUP)
+			{
+				switch (event.key.keysym.sym)
+				{
+				case SDLK_LEFT:
+					if (e[0].accelX < 0)
+					{
+						e[0].accelX = 0;
+					}
+					break;
+				case SDLK_RIGHT:
+					if (e[0].accelX > 0)
+					{
+						e[0].accelX = 0;
+					}
+					break;
+				case SDLK_SPACE:
+					break;
+
+				}
+			}
+		}
+
+
+		//tick
+		float totalTime = (float)SDL_GetTicks() / 1000;
+		float totalTick = totalTime - lastFrameTime;
+
+		lastFrameTime = totalTime;
+		do
+		{
+			float tick = totalTick < maximumTick ? totalTick : maximumTick;
 
 			for (int i = 0; i < e.size(); i++)
 			{
-				e[0].update(tick);
+				e[i].update(tick);
+				e[i].checkCollisions(level);
 			}
+			totalTick -= maximumTick;
+		} while (totalTick > maximumTick);
 			//render
 			glClear(GL_COLOR_BUFFER_BIT);
 			
 			Matrix view;
 			view.setPosition(80-e[0].x, 50-e[0].y, 0);
 			program->setViewMatrix(view);
-			//drawText(font, "test", 80, 50, 24, 1);
+			drawText(font, "0", 0,0, 24, 1);
 			level.render(program);
 			for (int i = 0; i < e.size(); i++)
 			{

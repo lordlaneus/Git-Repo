@@ -8,69 +8,80 @@ Entity::Entity()
 	height = 1;
 	speedY = 0;
 	speedX = 0;
-	maxSpeed = -1;
+	maxSpeedX = -1;
+	maxSpeedY = -1;
 	accelX = 0;
 	accelY = 0;
 	friction = 0;
 	sprite = 0;
 
+	ctop = false;
+	cright = false;
+	cleft = false;
+	cdown = false;
 }
 
 void Entity::makePlayer()
 { 
 	type = PLAYER;
-	x = 40;
-	y = 100;
+	x = 30;
+	y = -10;
 	width = 8;
 	height = 12;
 	speedY = 0;
 	speedX = 0;
-	maxSpeed = -1;
+	maxSpeedX = 50;
 	accelX = 0;
-	accelY = -50;
-	friction = 0;
+	accelY = -100;
+	friction = 25;
 	sprite = 2;
 }
-bool Entity::checkCollision(Entity &e)
+void Entity::checkCollisions(Level l)
 {
-	if (e.y - e.height / 2 > y + height / 2){ return false; }
-	if (e.y + e.height / 2 < y - height / 2){ return false; }
-	if (e.x - e.width / 2 > x + width / 2){ return false; }
-	if (e.x + e.width / 2 < x - width / 2){ return false; }
-	return true;
+	if (collidePoint(l, x, y - height / 2))
+	{
+		speedY = 0;
+		y -=  fmod(y - height / 2, l.tileSize);	
+	}
+	else if (collidePoint(l, x, y + height / 2))
+	{
+		speedY = 0;
+		y -= fmod(y + height / 2, l.tileSize) + l.tileSize;
+	}
 
-}
-void Entity::collide(std::vector<Entity> &e)
- {
+	if (collidePoint(l, x - width/2 , y))
+	{
+		speedX = 0;
+		accelX = 0;
+		x -= fmod(x - width / 2, l.tileSize) - l.tileSize;
+	}
+	else if(collidePoint(l, x + width / 2, y))
+	{
+		speedX = 0;
+		accelX = 0;
+		x -= fmod(x + width / 2, l.tileSize);
+	}
+	
 	
 }
-void Entity::update(float tick)
+float Entity::collidePoint(Level l, float x, float y)
 {
+	{
+		int xt = x / (int)l.tileSize;
+		int yt = (-y) / (int)l.tileSize;
+		if (xt >= 0 && yt >= 0 && xt < l.tiles.size() & yt < l.tiles.size())
+		{
+			if (l.tiles[yt][xt] != 0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+void Entity::update(float tick){
 	if (type = PLAYER)
 	{
-		///
-	}
-	if (maxSpeed > 0 && abs(speedX) > maxSpeed)
-	{
-		if (speedX < 0)
-		{
-			speedX = -maxSpeed;
-		}
-		else
-		{
-			speedX = maxSpeed;
-		}
-	}
-	if (maxSpeed > 0 && speedY > maxSpeed)
-	{
-		if (speedY < 0)
-		{
-			speedY = -maxSpeed;
-		}
-		else
-		{
-			speedY = maxSpeed;
-		}
 	}
 
 	speedX += accelX *tick;
@@ -90,7 +101,7 @@ void Entity::setTexture(GLuint t, int s, int sx, int sy)
 }
 void Entity::render(ShaderProgram *program)
 {
-
+	
 	float u = (float)(((int)sprite) % sheetX) / (float)sheetX;
 	float v = (float)(((int)sprite) / sheetX) / (float)sheetY;
 	float spriteWidth = 1.0 / (float)sheetX;

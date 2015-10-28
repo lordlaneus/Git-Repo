@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ShaderProgram.h"
+#include "Level.h"
 #include <vector>
 enum Type{PLAYER, ENEMY};
 class Entity {
@@ -9,8 +10,8 @@ public:
 	Entity();
 	void makePlayer();
 
-	bool checkCollision(Entity&);
-	void collide(std::vector<Entity>&);
+	void checkCollisions(Level);
+	float collidePoint(Level, float, float);
 	void update(float);
 	void setTexture(GLuint, int, int, int);
 	void render(ShaderProgram*);
@@ -24,11 +25,14 @@ public:
 	float speedY;
 	float accelX;
 	float accelY;
-	float maxSpeed;
+	float maxSpeedX;
+	float maxSpeedY;
 	float friction;
 
 	GLuint texture;
 	int sprite;
 	int sheetX;
 	int sheetY;
+
+	bool ctop, cleft, cright, cdown;
 };
