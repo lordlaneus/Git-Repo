@@ -2,16 +2,17 @@
 #include <vector>
 Entity::Entity()
 {
-	x = 0;
-	y = 0;
+	position.x = 0;
+	position.y = 0;
+	rotation = 0;
 	width = 1;
 	height = 1;
-	speedY = 0;
-	speedX = 0;
-	maxSpeedX = -1;
-	maxSpeedY = -1;
-	accelX = 0;
-	accelY = 0;
+	velocity.y = 0;
+	velocity.x = 0;
+	maxVel.x = -1;
+	maxVel.y = -1;
+	accel.x = 0;
+	accel.y = 0;
 	friction = 0;
 	sprite.index = 0;
 
@@ -20,57 +21,15 @@ Entity::Entity()
 	cleft = false;
 	cdown = false;
 }
-void Entity::checkCollisions(Level l)
-{
-	if (collidePoint(l, x, y - height / 2))
-	{
-		speedY = 0;
-		y -=  fmod(y - height / 2, l.tileSize);	
-	}
-	else if (collidePoint(l, x, y + height / 2))
-	{
-		speedY = 0;
-		y -= fmod(y + height / 2, l.tileSize) + l.tileSize;
-	}
 
-	if (collidePoint(l, x - width/2 , y))
-	{
-		speedX = 0;
-		accelX = 0;
-		x -= fmod(x - width / 2, l.tileSize) - l.tileSize;
-	}
-	else if(collidePoint(l, x + width / 2, y))
-	{
-		speedX = 0;
-		accelX = 0;
-		x -= fmod(x + width / 2, l.tileSize);
-	}
-	
-	
-}
-float Entity::collidePoint(Level l, float x, float y)
-{
-	{
-		int xt = x / (int)l.tileSize;
-		int yt = (-y) / (int)l.tileSize;
-		if (xt >= 0 && yt >= 0 && xt < l.tiles.size() & yt < l.tiles.size())
-		{
-			if (l.tiles[yt][xt] != 0)
-			{
-				return true;
-			}
-		}
-	}
-	return false;
-}
 void Entity::update(float tick){
 
-	speedX += accelX *tick;
-	speedX > 0 ? speedX -= friction*tick : speedX < 0 ? speedX += friction*tick : speedX = 0;
-	x += speedX*tick;
-	speedY += accelY*tick;
-	speedY > 0 ? speedY -= friction*tick : speedY < 0 ? speedY += friction*tick : speedY = 0;
-	y += speedY*tick;
+	velocity.x += accel.x *tick;
+	velocity.x > 0 ? velocity.x -= friction*tick : velocity.x < 0 ? velocity.x += friction*tick : velocity.x = 0;
+	position.x += velocity.x*tick;
+	velocity.y += accel.y*tick;
+	velocity.y > 0 ? velocity.y -= friction*tick : velocity.y < 0 ? velocity.y += friction*tick : velocity.y = 0;
+	position.y += velocity.y*tick;
 	
 }
 void Entity::setTexture(GLuint t, int s, int sx, int sy)
@@ -98,8 +57,16 @@ void Entity::render(ShaderProgram *program)
 	float vertices[] = { -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f };
 	// our regular sprite drawing
 	Matrix modelMatrix;
-	modelMatrix.Translate(x, y, 0);
-	modelMatrix.Scale(width, height, 1);
+	modelMatrix.Translate(position.x, position.y, 0);
+	modelMatrix.Rotate(rotation);
+	if (sprite.flipped)
+	{
+		modelMatrix.Scale(-width, height, 1);
+	}
+	else
+	{
+		modelMatrix.Scale(width, height, 1);
+	}
 	
 
 	program->setModelMatrix(modelMatrix);
@@ -116,8 +83,7 @@ void Entity::render(ShaderProgram *program)
 
 	glBindTexture(GL_TEXTURE_2D, sprite.texture);
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-	glDrawArrays(GL_TRIANGLES, 3, 3);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
 	glDisableVertexAttribArray(program->positionAttribute);

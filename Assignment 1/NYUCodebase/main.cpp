@@ -33,50 +33,7 @@ GLuint loadImage(const char *path)
 }
 void drawSprite(GLuint texture, float x = 0, float y = 0, float angle = 0, float xscale = 1, float yscale =1)
 {
-	//setup
-	ShaderProgram program(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
-
-	Matrix projectionMatrix;
-	Matrix modelMatrix;
-	Matrix viewMatrix;
-
-	projectionMatrix.setOrthoProjection(-3.55f, 3.55f, -2.0f, 2.0f, -1.0f, 1.0f);
-
-	//transformations
-	modelMatrix.Translate(x,y,0);
-	modelMatrix.Scale(xscale, yscale, 1);
-	modelMatrix.Rotate(angle);
 	
-	program.setModelMatrix(modelMatrix);
-	program.setProjectionMatrix(projectionMatrix);
-	program.setViewMatrix(viewMatrix);
-
-	glUseProgram(program.programID);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	float vertices[] = { 0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f };
-
-
-	float texCoords[] = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f };
-
-	glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, vertices);
-	glEnableVertexAttribArray(program.positionAttribute);
-
-	
-
-	//drawing
-	glEnableVertexAttribArray(program.texCoordAttribute);
-
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glVertexAttribPointer(program.texCoordAttribute, 2, GL_FLOAT, false, 0, texCoords);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-	glDrawArrays(GL_TRIANGLES, 3, 3);
-
-
-	glDisableVertexAttribArray(program.positionAttribute);
 	glDisableVertexAttribArray(program.texCoordAttribute);
 
 

@@ -15,6 +15,7 @@ public:
 		sheetH = h;
 		sheetW = w;
 	}
+	bool flipped = false;
 	GLuint texture;
 	int index;
 	int sheetH;

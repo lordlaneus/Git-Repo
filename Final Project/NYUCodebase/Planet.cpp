@@ -1,18 +1,41 @@
 #include "Planet.h"
+#include "Cluster.h"
 #include <vector>
 
 using namespace std;
 
+Planet::Planet()
+{
+
+}
 Planet::Planet(Sprite sprite, float x, float y, float size, float density)
 {
 
 	this->sprite = sprite;
-	this-> x = x;
-	this->y = y;
+	position.x = x;
+	on = false;
+	position.y = y;
 	this->size = size;
 	this->density = density;
 
 }
+bool Planet::validIn(Cluster c)
+{
+	for (int i = 0; i < c.planets.size(); i++)
+	{
+		Planet p = c.planets[i];
+		if (p.position.distance(position) < p.size / 2 + size / 2 + 20)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+float Planet::mass()
+{
+	return size*density;
+}
+
 void Planet::render(ShaderProgram *program){
 
 		float u = (float)(((int)sprite.index) % sprite.sheetW) / (float)sprite.sheetW;
@@ -30,7 +53,7 @@ void Planet::render(ShaderProgram *program){
 		float vertices[] = { -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f };
 		// our regular sprite drawing
 		Matrix modelMatrix;
-		modelMatrix.Translate(x, y, 0);
+		modelMatrix.Translate(position.x, position.y, 0);
 		modelMatrix.Scale(size, size, 1);
 
 

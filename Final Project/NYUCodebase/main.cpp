@@ -3,9 +3,10 @@
 #endif
 #include "ShaderProgram.h"
 #include "Matrix.h"
-#include "Level.h"
-#include "Planet.h"
-#include "Cluster.h"
+#include "Player.h"
+#include "Game.h"
+#include "Util.h"
+#include <time.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_image.h>
@@ -22,72 +23,13 @@
 SDL_Window* displayWindow;
 ShaderProgram* program;
 
-GLuint loadImage(const char *path)
-{
-	SDL_Surface *surface = IMG_Load(path);
 
-	GLuint textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	SDL_FreeSurface(surface);
-
-	return textureID;
-
-}
-
-void drawText(int fontTexture, std::string text, float x, float y, float size, float spacing) {
-	float texture_size = 1.0 / 16.0f;
-	std::vector<float> vertexData;
-	std::vector<float> texCoordData;
-	Matrix modelMatrix;
-	Matrix viewMatrix;
-
-	
-	modelMatrix.Translate(x, y, 0);
-
-	program->setModelMatrix(modelMatrix);
-	for (int i = 0; i < text.size(); i++) {
-		float texture_x = (float)(((int)text[i]) % 16) / 16.0f;
-		float texture_y = (float)(((int)text[i]) / 16) / 16.0f;
-		vertexData.insert(vertexData.end(), {
-			((size + spacing) * i) + (-0.5f * size), 0.5f * size,
-			((size + spacing) * i) + (-0.5f * size), -0.5f * size,
-			((size + spacing) * i) + (0.5f * size), 0.5f * size,
-			((size + spacing) * i) + (0.5f * size), -0.5f * size,
-			((size + spacing) * i) + (0.5f * size), 0.5f * size,
-			((size + spacing) * i) + (-0.5f * size), -0.5f * size,
-		});
-		texCoordData.insert(texCoordData.end(), {
-			texture_x, texture_y,
-			texture_x, texture_y + texture_size,
-			texture_x + texture_size, texture_y,
-			texture_x + texture_size, texture_y + texture_size,
-			texture_x + texture_size, texture_y,
-			texture_x, texture_y + texture_size,
-		});
-	}
-	glUseProgram(program->programID);
-
-	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, vertexData.data());
-	glEnableVertexAttribArray(program->positionAttribute);
-	glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, texCoordData.data());
-	glEnableVertexAttribArray(program->texCoordAttribute);
-	glBindTexture(GL_TEXTURE_2D, fontTexture);
-	glDrawArrays(GL_TRIANGLES, 0, text.size() * 6);
-	glDisableVertexAttribArray(program->positionAttribute);
-	glDisableVertexAttribArray(program->texCoordAttribute);
-}
 
 
 
 int main(int argc, char *argv[])
 {
+	srand(time(NULL));
 	SDL_Init(SDL_INIT_VIDEO);
 	displayWindow = SDL_CreateWindow("Platformer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(displayWindow);
@@ -100,7 +42,6 @@ int main(int argc, char *argv[])
 	bool done = false;
 	//setup
 	program = new ShaderProgram(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
-
 	Matrix projectionMatrix;
 	Matrix modelMatrix;
 	Matrix viewMatrix;
@@ -116,7 +57,7 @@ int main(int argc, char *argv[])
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	
+
 
 
 
@@ -127,50 +68,100 @@ int main(int argc, char *argv[])
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	//set up game
-	Sprite planetSprites(loadImage("Planet Sheet.png"), 0, 1, 1);
-	Cluster cluster(5, planetSprites);
-	GLuint font = loadImage("font.png");
-	while (!done) {
+	Game g;
+	while (!done)
+	{
+		if (g.state == Game::title)
+		{
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
+					g.state = Game::done;
+				}
+				else if (event.type == SDL_KEYUP)
+				{
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_RETURN:
+						g.state = Game::play;
+						break;
+					}
+				}
+			}
+			//render
+			glClear(GL_COLOR_BUFFER_BIT);
+			GLuint font = g.sprites["font"].texture;
+			Util::drawText(program, font, "Gravity Well", 15, 50, 10, 2);
+			Util::drawText(program, font, "Press \"Enter\"", 35, 35, 5, 2);
+			SDL_GL_SwapWindow(displayWindow);
+		}
+		else if (g.state==Game::play) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
+				g.state = Game::done;
 				done = true;
 			}
-			if (event.type == SDL_KEYDOWN)
+			if (event.type == SDL_MOUSEBUTTONDOWN) {
+				float unitX = (((float)event.button.x / 1280) * 160);
+				float unitY = (((float)(720 - event.button.y) / 720) * 100);
+				unitX += g.player->position.x - 80;
+				unitY += g.player->position.y - 50;
+				g.player->hook->shoot(unitX, unitY);
+			}
+			if (event.type == SDL_KEYDOWN&& event.key.repeat == 0)
 			{
 				switch (event.key.keysym.sym)
 				{
-
-
-
+				case SDLK_w:
+				case SDLK_a:
+				case SDLK_s:
+				case SDLK_d:
+					g.player->wasd.add(event.key.keysym.sym);
+					g.player->walk();
+					break;
 				}
 			}
 			if (event.type == SDL_KEYUP)
 			{
+				switch (event.key.keysym.sym)
+				{
+				case SDLK_w:
+				case SDLK_a:
+				case SDLK_s:
+				case SDLK_d:
+					g.player->wasd.remove(event.key.keysym.sym);
+					g.player->walk();
+					break;
+				case SDLK_SPACE:
+					g.player->jump();
+					break;
+				}
 			}
 		}
 
+				//tick
+				float totalTime = (float)SDL_GetTicks() / 1000;
+				float totalTick = totalTime - lastFrameTime;
 
-		//tick
-		float totalTime = (float)SDL_GetTicks() / 1000;
-		float totalTick = totalTime - lastFrameTime;
+				lastFrameTime = totalTime;
+				do
+				{
+					float tick = totalTick < maximumTick ? totalTick : maximumTick;
+					g.update(tick);
+					totalTick -= maximumTick;
+				} while (totalTick > maximumTick);
+				//render
+				glClear(GL_COLOR_BUFFER_BIT);
 
-		lastFrameTime = totalTime;
-		do
-		{
-			float tick = totalTick < maximumTick ? totalTick : maximumTick;
+				Matrix view;
+				view.Translate(-g.player->position.x + 80, -g.player->position.y + 50, 0);
+				program->setViewMatrix(view);
+				g.render(program);
 
-			totalTick -= maximumTick;
-		} while (totalTick > maximumTick);
-			//render
-			glClear(GL_COLOR_BUFFER_BIT);
-			cluster.render(program);
-			Matrix view;
-			program->setViewMatrix(view);
 
-			
-			SDL_GL_SwapWindow(displayWindow);
-		}
+				SDL_GL_SwapWindow(displayWindow);
+			}
+	}
 		SDL_Quit();
 		return 0;
 	}
+	
