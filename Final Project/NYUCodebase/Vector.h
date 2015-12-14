@@ -11,9 +11,11 @@ public:
 	float angle();
 	void clear();
 	float distance(Vector v);
+	float dot(Vector);
 	float length();
-	void rotate(float r);
-	void normalize(float scale = 1);
+	Vector rotate(float r);
+	Vector normalize(float scale = 1);
+	
 
 	Vector operator* (const float f)
 	{

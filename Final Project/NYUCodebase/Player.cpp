@@ -1,34 +1,44 @@
 #include "Player.h"
-
+#include "Enemy.h"
 using namespace std;
 
-Player::Player()
+Player::Player():Entity()
 {
-	Entity();
+	
 
 }
 
-Player::Player(Game* g, Sprite sprite)
+Player::Player(Game* g, Sprite sprite) :
+Entity(g)
 {
-	Entity();
 	onGround = false;
 	hook = new Hook(this);
+	sword = new Weapon(g->sprites["attack"],this);
 	hook->sprite = g->sprites["hook"];
-	this->g = g;
 	this->sprite = sprite;
-	position.x = 80;
-	position.y = 50;
-	width = 5;
-	height = 5;
+	position.y = 15;
+	size = Vector(4, 7);
+	type = player;
 
 }
-bool Player::collides(Planet p)
+bool Player::collidesP(Planet p)
 {
 	if (p.on)
 	{
 		return false;
 	}
-	return position.distance(p.position) < p.size / 2 + height / 4;
+	return position.distance(p.position) < p.size / 2 + size.y / 4;
+}
+
+
+void Player::attack(Vector dir)
+{
+	sword->swing(dir);
+}
+void Player::die()
+{
+	g->showMsg("Game Over","\"r\" to reset.", "\"q\" to quit.");
+	g->state = Game::gameOver;
 }
 
 void Player::jump()
@@ -40,34 +50,54 @@ void Player::jump()
 		jumpVector.normalize(jumpPower);
 		velocity = velocity + jumpVector;
 	}
+	else if (hook->state==Hook::reeling)
+	{
+		hook->state = Hook::recoiling;
+	}
 } 
 void Player::land(Planet &p)
 {
 	if (p.type == Planet::moon)
 	{
+		g->playSound("land");
 		hook->state = Hook::away;
 		onGround = true;
+
+		planet = &p;
 		walk();
 		accel.clear();
 		velocity.clear();
-		planet = &p;
 	}
 	else if (p.type == Planet::star)
 	{
-
+		g->triggerParticles(g->fireEmitter,position, p,10);
+		planet = &p;
 		hook->state = Hook::away;
 		onGround = true;
 		accel.clear();
 		velocity.clear();
-		planet = &p;
-		takeDamage(10); 
+		
+		takeDamage(20); 
 		jump();
 	}
 }
 void Player::takeDamage(float dmg)
 {
+	if (hurt > 0)
+	{
+		return;
+	}
 	health -= dmg;
+	g->health.current = health;
+	if (health<= 0)
+	{
+		die();
+		g->playSound("death");
+		return;
+	}
+	g->playSound("hurt");
 	hurt = 1;
+	
 }
 void Player::walk()
 {
@@ -103,12 +133,13 @@ void Player::pop(Planet p)
 	Vector v = position - p.position;
 	float l = v.length();
 	v.normalize();
-	v = v*(p.size / 2 + height / 4);
+	v = v*(p.size / 2 + size.y / 4);
 	position = p.position+ v;
 	if (!p.on)
 	{
-		v.normalize(height / 2);
-		g->emitDust(position-v, p);
+		v.normalize(size.y/ 2);
+		g->dustEmitter.sprite.index = p.sprite.index;
+		g->triggerParticles(g->dustEmitter,position-v, p);
 	}
 
 }
@@ -117,9 +148,32 @@ void Player::render(ShaderProgram* program)
 {
 	Entity::render(program);
 	hook->render(program);
+	if (sword->active)
+	{
+		sword->render(program);
+	}
+	
 }
 void Player::update(float elapsed)
 {
+	if (sword->active)
+	{
+		for (int i = 0; i < g->entities.size(); i++)
+		{
+			Entity*e = g->entities[i];
+			if (e->collides(*sword))
+			{
+				if (e->type == Entity::enemy)
+				{
+					dynamic_cast<Enemy*>(e)->takeDamage(1, e->position - position);
+				}
+				else if (e->type == Entity::projectile)
+				{
+					dynamic_cast<Projectile*>(e)->active = false;
+				}
+			}
+		}
+	}
 	if (hurt > 0)
 	{
 	hurt -= elapsed;
@@ -150,7 +204,7 @@ void Player::update(float elapsed)
 		pop(*planet);
 		planet->on = true;
 		Vector newPos = position - planet->position;
-		newPos.rotate(walkSpeed*walking*elapsed);
+		newPos.rotate(walkSpeed*walking*elapsed/planet->size);
 		position = planet->position + newPos;
 		rotation = (planet->position - position).angle() + M_PI / 2;
 	}
@@ -161,7 +215,7 @@ void Player::update(float elapsed)
 		Entity::update(elapsed);
 		for (int i = 0; i < g->cluster.planets.size(); i++)
 		{
-			if (collides(g->cluster.planets[i]))
+			if (collidesP(g->cluster.planets[i]))
 			{
 				
 				land(g->cluster.planets[i]);
@@ -173,6 +227,7 @@ void Player::update(float elapsed)
 		}
 	}
 	hook->update(elapsed);
+	sword->update(elapsed);
 	changeSprite();
 }
 void Player::changeSprite()

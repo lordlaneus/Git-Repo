@@ -1,36 +1,67 @@
 #include "Entity.h"
 #include <vector>
+#include <math.h>
+
+#define TAU 1.57079
 Entity::Entity()
 {
-	position.x = 0;
-	position.y = 0;
-	rotation = 0;
-	width = 1;
-	height = 1;
-	velocity.y = 0;
-	velocity.x = 0;
-	maxVel.x = -1;
-	maxVel.y = -1;
-	accel.x = 0;
-	accel.y = 0;
-	friction = 0;
-	sprite.index = 0;
 
-	ctop = false;
-	cright = false;
-	cleft = false;
-	cdown = false;
 }
+Entity::Entity(Game* g)
+{
 
-void Entity::update(float tick){
+	this->g = g;
+	size = Vector(1, 1);
+}
+bool Entity::collides(Entity&e)
+{
 
-	velocity.x += accel.x *tick;
-	velocity.x > 0 ? velocity.x -= friction*tick : velocity.x < 0 ? velocity.x += friction*tick : velocity.x = 0;
-	position.x += velocity.x*tick;
-	velocity.y += accel.y*tick;
-	velocity.y > 0 ? velocity.y -= friction*tick : velocity.y < 0 ? velocity.y += friction*tick : velocity.y = 0;
-	position.y += velocity.y*tick;
+	return (collides(e, cos(rotation), sin(rotation)) &&
+		collides(e, cos(rotation+TAU), sin(rotation+TAU))&&
+		collides(e, cos(e.rotation), sin(e.rotation)) &&
+		collides(e, cos(e.rotation+TAU), sin(e.rotation+TAU)));
+
+}
+bool Entity::collides(Planet p)
+{
+	return (position.distance(p.position) < p.size / 2 + size.y / 4);
+}
+bool Entity::collides(Entity& e, float x, float y)
+{
+	Vector normal(x, y);
+	vector<float> v1 = nVertices(normal);
+	vector<float> v2 = e.nVertices(normal);
+	bool less = false;
+	bool more = false;
+	for (int i = 0; i < 4; i++ )
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			if (v1[i] < v2[j])
+			{
+				less = true;
+			}
+			else
+			{
+				more = true;
+			}
+		}
+	}
 	
+	return (less&&more);
+}
+vector<float> Entity::nVertices(Vector normal)
+{
+	vector<float>nv;
+	nv.push_back((position + (size / 2).rotate(rotation)).dot(normal));
+	nv.push_back((position + (size / 2).rotate(rotation + TAU)).dot(normal));
+	nv.push_back((position + (size / 2).rotate(rotation + TAU * 2)).dot(normal));
+	nv.push_back((position + (size / 2).rotate(rotation + TAU * 3)).dot(normal));
+
+	return nv;
+}
+void Entity::playerCollision(Player* p) 
+{
 }
 void Entity::setTexture(GLuint t, int s, int sx, int sy)
 {
@@ -39,6 +70,21 @@ void Entity::setTexture(GLuint t, int s, int sx, int sy)
 	sprite.sheetW = sx;
 	sprite.sheetH = sy;
 }
+void Entity::update(float elapsed){
+
+	if (hurt > 0)
+	{
+		hurt -= elapsed;
+	}
+	velocity.x += accel.x *elapsed;
+	velocity.x > 0 ? velocity.x -= friction*elapsed : velocity.x < 0 ? velocity.x += friction*elapsed : velocity.x = 0;
+	position.x += velocity.x*elapsed;
+	velocity.y += accel.y*elapsed;
+	velocity.y > 0 ? velocity.y -= friction*elapsed : velocity.y < 0 ? velocity.y += friction*elapsed : velocity.y = 0;
+	position.y += velocity.y*elapsed;
+	
+}
+
 void Entity::render(ShaderProgram *program)
 {
 	
@@ -61,11 +107,11 @@ void Entity::render(ShaderProgram *program)
 	modelMatrix.Rotate(rotation);
 	if (sprite.flipped)
 	{
-		modelMatrix.Scale(-width, height, 1);
+		modelMatrix.Scale(-size.x, size.y, 1);
 	}
 	else
 	{
-		modelMatrix.Scale(width, height, 1);
+		modelMatrix.Scale(size.x, size.y, 1);
 	}
 	
 

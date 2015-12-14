@@ -15,14 +15,17 @@ public:
 	void render(ShaderProgram*);
 	void reset(Particle &p);
 	void trigger();
+	void start();
 
 
 	Vector position;
 	Vector gravity;
+	bool loop = false;
 	float mass;
 	Vector velocity;
 	Vector velocityDev;
 	Sprite sprite;
+	float lifeDev = 0;
 	float maxLifetime;
 	float startSize;
 	float endSize;

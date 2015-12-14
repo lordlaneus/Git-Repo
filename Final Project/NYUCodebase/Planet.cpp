@@ -24,7 +24,7 @@ bool Planet::validIn(Cluster c)
 	for (int i = 0; i < c.planets.size(); i++)
 	{
 		Planet p = c.planets[i];
-		if (p.position.distance(position) < p.size / 2 + size / 2 + 20)
+		if (p.position.distance(position) < p.size / 2 + size / 2 + 10)
 		{
 			return false;
 		}

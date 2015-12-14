@@ -11,19 +11,28 @@ Cluster::Cluster(int size,Sprite s)
 	x = 0;
 	y = 0;
 	sprite = s;
+	Planet home(sprite);
+	home.size = 30;
+	home.sprite.index = 0;
+	planets.push_back(home);
 	for (int i = 0; i < size; i++)
 	{
 		Planet p(sprite);
 		if (Util::randFloat() < .2)
 		{
 			p.type = Planet::star;
-			p.sprite.index = 1;
+			p.sprite.index = 7;
 		}
+		else
+		{
+			p.sprite.index = rand() % 6 + 1;
+		}
+		p.position = Vector(1, 1);
 		do
 		{
-			p.position.x = static_cast <float> (Util::randFloat() * 1000)-500;
-			p.position.y = static_cast <float> (Util::randFloat() * 1000)-500;
-			p.size = static_cast <float> (Util::randFloat() * 30) + 5;
+			p.position.rotate(Util::randFloat()*M_PI * 2);
+			p.position.normalize(Util::randFloat() * 250);
+			p.size = static_cast <float> (Util::randFloat() * 20) + 10;
 		} while (!p.validIn(*this));
 		planets.push_back(p);
 	}
@@ -63,15 +72,14 @@ void Cluster::render(ShaderProgram *program)
 				u + spriteWidth, v
 			});
 			vertexData.insert(vertexData.end(), {
-				planets[i].position.x - planets[i].size / 2, planets[i].position.y - planets[i].size / 2,
-				planets[i].position.x + planets[i].size / 2, planets[i].position.y + planets[i].size / 2,
 				planets[i].position.x - planets[i].size / 2, planets[i].position.y + planets[i].size / 2,
-
-				planets[i].position.x + planets[i].size / 2, planets[i].position.y + planets[i].size / 2,
+				planets[i].position.x + planets[i].size / 2, planets[i].position.y - planets[i].size / 2,
 				planets[i].position.x - planets[i].size / 2, planets[i].position.y - planets[i].size / 2,
-				planets[i].position.x + planets[i].size / 2, planets[i].position.y - planets[i].size / 2
+
+				planets[i].position.x + planets[i].size / 2, planets[i].position.y - planets[i].size / 2,
+				planets[i].position.x - planets[i].size / 2, planets[i].position.y + planets[i].size / 2,
+				planets[i].position.x + planets[i].size / 2, planets[i].position.y + planets[i].size / 2
 			});
-			int a;
 			
 		}
 	Matrix modelMatrix;

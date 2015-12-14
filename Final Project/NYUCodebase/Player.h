@@ -6,28 +6,33 @@
 #include "Sprite.h"
 #include "Game.h"
 #include "Hook.h"
+#include "Weapon.h"
 #include "KeyStack.h"
 
 class Game;
 class Hook;
+class Weapon;
 class Player: public Entity {
 public:
-	Game* g;
 	Hook* hook;
 	Planet* planet;
+	Weapon* sword;
 	KeyStack wasd;
 	bool onGround;
 	float hurt = 0;
-	float Maxhealth = 100;
+	float maxHealth = 100;
 	float health = 100;
-	float walkSpeed = 2.5;
+	float walkSpeed = 75;
 	float jumpPower = 50;
 	float walking = 0;
 	float mass = 50;
 	Player();
 	Player(Game *g, Sprite);
 
-	bool collides(Planet p);
+	bool collidesP(Planet p);
+	void collide(Entity& e);
+	void attack(Vector);
+	void die();
 	void jump();
 	void land(Planet& p);
 	void takeDamage(float dmg);

@@ -13,6 +13,7 @@ float Vector::angle()
 {
 	return atan2(y,x);
 }
+
 void Vector::clear()
 {
 	x = 0;
@@ -23,19 +24,24 @@ float Vector::distance(Vector v)
 {
 	return this->operator-(v).length();
 }
+float Vector::dot(Vector v)
+{
+	return((v.x*x) + (v.y*y));
+}
 float Vector::length()
 {
 	return sqrt(x*x + y*y+z*z);
 
 
 }
-void Vector::rotate(float r)
+Vector Vector::rotate(float r)
 {
 	float temp = x*cos(r) - y*sin(r);
 	y = x*sin(r) + y*cos(r);
 	x = temp;
+	return *this;
 }
-void Vector::normalize(float scale)
+Vector Vector::normalize(float scale)
 {
 	if (length() != 0)
 	{
@@ -45,5 +51,6 @@ void Vector::normalize(float scale)
 		y /= l;
 		z /= l;
 	}
+	return *this;
 }
 

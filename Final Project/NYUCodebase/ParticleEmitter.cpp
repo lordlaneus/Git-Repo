@@ -22,7 +22,15 @@ void ParticleEmitter::update(float elapsed)
 		particles[i].update(elapsed);
 		if (particles[i].lifetime > maxLifetime)
 		{
-			particles[i].on = false;
+			if (loop)
+			{
+				reset(particles[i]);
+			}
+			else
+			{
+				particles[i].on = false;
+			}
+			
 		}
 
 	}
@@ -38,7 +46,7 @@ void ParticleEmitter::render(ShaderProgram* program)
 
 	program->setModelMatrix(modelMatrix);
 
-	for (int i = 0; i < particles.size(); i++) {
+	for (int i = 0; i < particles.size() && i<pCount; i++) {
 		if (particles[i].on)
 		{ 
 		float m = (particles[i].lifetime / maxLifetime);
@@ -51,15 +59,18 @@ void ParticleEmitter::render(ShaderProgram* program)
 			particles[i].position.x - size, particles[i].position.y - size,
 			particles[i].position.x + size, particles[i].position.y - size
 		});
+		float u = (float)(((int)sprite.index) % sprite.sheetW) / (float)sprite.sheetW;
+		float v = (float)(((int)sprite.index) / sprite.sheetW) / (float)sprite.sheetH;
+		float spriteWidth = 1.0 / (float)sprite.sheetW;
+		float spriteHeight = 1.0 / (float)sprite.sheetH;
 		texCoords.insert(texCoords.end(), {
-			0.0f, 0.0f,
-			0.0f, 1.0f,
-			1.0f, 0.0f,
+			u, v+spriteHeight,
+			u ,v,
+			u+spriteWidth, v + spriteHeight,
 
-			1.0f, 0.0f,
-			0.0f, 1.0f,
-			1.0f, 1.0f
-
+			u + spriteWidth, v + spriteHeight,
+			u, v,
+			u + spriteWidth, v
 		});
 		}
 	}
@@ -81,7 +92,7 @@ void ParticleEmitter::reset(Particle &p)
 	p.velocity.x += Util::randFloat()*velocityDev.x - velocityDev.x / 2;
 	p.velocity.y += Util::randFloat()*velocityDev.y - velocityDev.y / 2;
 	p.size = startSize;
-	p.lifetime = 0;
+	p.lifetime = Util::randFloat()*lifeDev;
 	p.position.x = 0;
 	p.position.y = 0;
 	p.gravity = gravity;
@@ -94,5 +105,14 @@ void ParticleEmitter::trigger()
 	for (int i = 0; i < particles.size(); i++) {
 		reset(particles[i]);
 	}
-	int a =5;
+}
+void ParticleEmitter::start()
+{
+	for (int i = 0; i < particles.size(); i++) {
+		reset(particles[i]);
+		particles[i].lifetime = maxLifetime* i / particles.size();
+		float a = particles[i].lifetime;
+
+		float b = 4;
+	}
 }

@@ -8,7 +8,7 @@ public:
 	{
 
 	}
-	Sprite(GLuint t, int i, int h, int w)
+	Sprite(GLuint t, int i, int w, int h)
 	{
 		texture = t;
 		index = i;
@@ -20,7 +20,7 @@ public:
 	int index;
 	int sheetH;
 	int sheetW;
-	void set(GLuint t, int i, int h, int w)
+	void set(GLuint t, int i, int w, int h)
 	{
 		texture = t;
 		index = i;
