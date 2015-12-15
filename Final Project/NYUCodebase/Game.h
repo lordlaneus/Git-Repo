@@ -28,8 +28,9 @@ public:
 	float startupTimer = 0;
 	int totalEnemies = 10;
 	bool exploring = false;
+	float lastFrameTime;
 	enum State { ready, startup, title, play, paused, message, victory, gameOver, done, };
-	Game();
+
 	State state = title;
 	Cluster cluster;
 	Player* player;
@@ -37,6 +38,7 @@ public:
 	std::map < std::string, Mix_Chunk*> sounds;
 	std::map < std::string, Mix_Music*> music;
 	Cursor cursor;
+	Menu* currentMenu;
 	Menu mainMenu;
 	Menu gameOverMenu;
 	Menu victoryMenu;
@@ -45,12 +47,14 @@ public:
 	Compass compass;
 	MsgBox msgBox;
 	TextDisplay enemyCount;
-	Projectile ball;
 	std::vector<GUI*> indicators;
 	std::vector<GUI*> gui;
 	std::vector<Entity*> entities;
 	DustEmitter dustEmitter;
 	ParticleEmitter fireEmitter;
+
+
+	Game();
 
 	void addSprite(std::string, const char*, int, int, int);
 	void addSound(std::string, const char*);
@@ -65,6 +69,7 @@ public:
 	void render(ShaderProgram*);
 	void pause();
 	void killAll();
+	void menuSelect();
 	void showMsg(std::string msg, std::string subMsg1 = "", std::string subMsg2 = "", std::string subMsg3 = "");
 	void triggerDust(Vector position, Planet p,float speed);
 	void triggerParticles(ParticleEmitter& pe, Vector position);

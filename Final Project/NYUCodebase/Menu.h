@@ -8,6 +8,7 @@ class Menu : public GUI
 public:
 
 	std::string title;
+	bool showTitle;
 	std::vector<std::string> options;
 	int selected = 0;
 

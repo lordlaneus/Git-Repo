@@ -221,6 +221,7 @@ void Player::update(float elapsed)
 		Entity::update(elapsed);
 		if (hurt <= 0)
 		{
+			g->currentMenu = &g->gameOverMenu;
 			g->gameOverMenu.show();
 			g->state = Game::gameOver;
 

@@ -9,7 +9,7 @@ Game::Game()
 	addSprite("logo", "resources\\logo.png", 0, 1, 1);
 	addSprite("fade", "resources\\fade.png", 0, 4, 4);
 	addSprite("cursor", "resources\\cursor.png", 0, 1, 1);
-	addSprite("bg", "resources\\background.png",0,1,1);
+	addSprite("bg", "resources\\background.png", 0, 1, 1);
 	addSprite("planet", "resources\\Planet Sheet.png", 0, 4, 2);
 	addSprite("enemy", "resources\\Enemy Sheet.png", 0, 4, 1);
 	addSprite("player", "resources\\Player Sheet.png", 1, 5, 2);
@@ -31,19 +31,21 @@ Game::Game()
 	addSound("explode", "resources\\explode.wav");
 	addMusic("bgm", "resources\\bgm.wav");
 
+	mainMenu.title = "Main Menu";
 	mainMenu.position = Vector(80, 60);
-	mainMenu.size = Vector(80,80);
+	mainMenu.size = Vector(80, 80);
 	mainMenu.margin = 30;
 	mainMenu.fontSize = 6;
 	mainMenu.fontSpacing = 1;
 	mainMenu.font = sprites["font"];
 	mainMenu.lineSpacing = 10;
 	gameOverMenu = mainMenu;
+	mainMenu.showTitle = false;
 	mainMenu.addOption("Play");
 	mainMenu.addOption("Roam");
 	mainMenu.addOption("Quit");
 
-	
+
 	gameOverMenu.position = Vector(80, 80);
 	gameOverMenu.size = Vector(80, 70);
 	gameOverMenu.visible = false;
@@ -54,8 +56,8 @@ Game::Game()
 	pauseMenu = gameOverMenu;
 	gameOverMenu.addOption("Retry");
 	gameOverMenu.addOption("Quit");
-	gui.push_back(&gameOverMenu); 
-	
+	gui.push_back(&gameOverMenu);
+
 	victoryMenu.title = "Victory!";
 	victoryMenu.margin = 15;
 	victoryMenu.addOption("Restart");
@@ -76,7 +78,7 @@ Game::Game()
 	msgBox = MsgBox(sprites["msg"], sprites["font"]);
 	gui.push_back(&msgBox);
 
-	enemyCount = TextDisplay(sprites["font"], "Enemeis Left:", 3, 1,120, 95);
+	enemyCount = TextDisplay(sprites["font"], "Enemeis Left:", 3, 1, 120, 95);
 	gui.push_back(&enemyCount);
 
 	compass.sprite = sprites["compass"];
@@ -85,12 +87,12 @@ Game::Game()
 	gui.push_back(&compass);
 
 	cursor.sprite = sprites["cursor"];
-	cursor.size = Vector(2, 2);
+	cursor.size = Vector(4, 4);
 	gui.push_back(&cursor);
 
 	reset();
 	state = ready;
-	
+
 	fireEmitter.sprite.index = 7;
 	fireEmitter.maxLifetime = 1;
 	fireEmitter.velocityDev.x = 10;
@@ -112,7 +114,7 @@ void Game::reset()
 	player = new Player(this, sprites["player"]);
 	health.e = player;
 
-	for (int i = 0; i <indicators.size(); i++)
+	for (int i = 0; i < indicators.size(); i++)
 	{
 		delete indicators[i];
 	}
@@ -123,7 +125,7 @@ void Game::reset()
 	}
 	entities.clear();
 
-	for (int i = 0; i < totalEnemies;i++)
+	for (int i = 0; i < totalEnemies; i++)
 	{
 		float dist = Util::randFloat()*(cluster.radius - 100) + 100;
 		float angle = Util::randFloat()*M_PI * 2;
@@ -179,7 +181,7 @@ void Game::update(float elapsed)
 	{
 		compass.visible = false;
 	}
-	
+
 	for (int i = 0; i < indicators.size(); i++)
 	{
 		indicators[i]->update(elapsed);
@@ -190,8 +192,9 @@ void Game::update(float elapsed)
 	}
 
 	enemyCount.text = "Enemeis Left: " + to_string(enemiesLeft);
-	if (enemiesLeft==0&& !exploring)
+	if (enemiesLeft == 0 && !exploring)
 	{
+		currentMenu = &victoryMenu;
 		victoryMenu.show();
 		state = Game::victory;
 	}
@@ -239,11 +242,11 @@ void Game::start(ShaderProgram *program)
 	Util::drawText(program, sprites["font"].texture, "Lord Laneus", 80, 80, 10, 2);
 	Util::drawText(program, sprites["font"].texture, "Presents:", 80, 20, 10, 2);
 
-	float m = startupTimer /1.5;
+	float m = startupTimer / 1.5;
 	int fade = m * 16;
 	if (fade <= 15)
 	{
-		renderFade(program, 15-fade);
+		renderFade(program, 15 - fade);
 	}
 
 
@@ -309,7 +312,7 @@ void Game::render(ShaderProgram *program)
 		Util::drawText(program, font, "  Help", 80, 40, 6, 2);
 		Util::drawText(program, font, "  Quit", 80, 25, 6, 2);*/
 	}
-	else if (state!=done)
+	else if (state != done)
 	{
 		Matrix view;
 		program->setViewMatrix(view);
@@ -363,6 +366,7 @@ void Game::render(ShaderProgram *program)
 }
 void Game::pause()
 {
+	currentMenu = &pauseMenu;
 	pauseMenu.show();
 	playSound("boop");
 	state = paused;
@@ -375,7 +379,70 @@ void Game::killAll()
 		entities[i]->active = false;
 	}
 }
-
+void Game::menuSelect()//I hate this function, but I'm not sure else I should implement this
+{
+	if (currentMenu->title == "Main Menu")
+	{
+		switch (currentMenu->selected)
+		{
+		case 1:
+			killAll();
+			exploring = true;
+		case 0:
+			state = play;
+			msgBox.visible = false;
+			lastFrameTime = (float)SDL_GetTicks() / 1000;
+			break;
+		case 2:
+			state = done;
+			break;
+		}
+	}
+	else if (currentMenu->title == "Paused")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			state = play;
+			currentMenu->visible = false;
+			break;
+		case 1:
+			state = title;
+			currentMenu->visible = false;
+			currentMenu = &mainMenu;
+			break;
+		}
+	}
+	else if (currentMenu->title == "GAME OVER")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			state = title;
+			currentMenu->visible = false;
+			currentMenu = &mainMenu;
+			break;
+		case 1:
+			state = done;
+			break;
+		}
+	}
+	else if (currentMenu->title == "Victory!")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			state = title;
+			currentMenu->visible = false;
+			currentMenu = &mainMenu;
+			break;
+		case 1:
+			exploring = true;
+			currentMenu->visible = false;
+			state = play;
+		}
+	}
+}
 void Game::addSprite(string name, const char* path, int i, int w, int h)
 {
 	sprites[name] = Sprite(Util::loadImage(path), i, w, h);
@@ -395,7 +462,7 @@ void Game::showMsg(string msg, string subMsg1, string subMsg2, string subMsg3)
 	msgBox.subText1 = subMsg1;
 	msgBox.subText2 = subMsg2;
 	msgBox.subText3 = subMsg3;
-	msgBox.visible= true;
+	msgBox.visible = true;
 	state = message;
 }
 void Game::triggerParticles(ParticleEmitter& pe, Vector position)

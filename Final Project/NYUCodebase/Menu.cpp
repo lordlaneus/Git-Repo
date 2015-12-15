@@ -29,20 +29,21 @@ void Menu::up()
 }
 void Menu::render(ShaderProgram* program)
 {
-	float optionsStart = position.y - fontSize * 2;
-	if (title != "")
-	{
-		optionsStart = position.y - fontSize * 5;
-	}
 
 
 	if (bg)
 	{
 		bg->render(program, position.x, position.y - size.y / 2, size.x, size.y);
 	}
-	Util::drawText(program, font.texture, title, position.x, position.y-fontSize*2, fontSize, fontSpacing);
-
 	
+
+	float optionsStart = position.y - fontSize * 2;
+	if (showTitle)
+	{
+		Util::drawText(program, font.texture, title, position.x, position.y - fontSize * 2, fontSize, fontSpacing);
+		optionsStart = position.y - fontSize * 5;
+	}
+
 	for (int i = 0; i < options.size(); i++)
 	{
 		Util::drawText(program, font.texture, options[i], position.x-size.x/2+margin, optionsStart-(i*fontSize+i*lineSpacing), fontSize, fontSpacing,false);
