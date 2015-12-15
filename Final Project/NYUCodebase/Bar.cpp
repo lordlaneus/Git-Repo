@@ -3,10 +3,11 @@
 using namespace std;
 Bar::Bar()
 {
-
 }
-Bar::Bar(Sprite sprite, float max, float length, float height)
+Bar::Bar(Sprite sprite, float max, float length, float height, Entity* e)
 {
+	this->e = e;
+
 	this->sprite = sprite;
 	position.clear();
 	size = Vector(length, height);
@@ -76,4 +77,26 @@ void Bar::render(ShaderProgram *program)
 	glBindTexture(GL_TEXTURE_2D, sprite.texture);
 
 	glDrawArrays(GL_TRIANGLES, 0,vertices.size()/2);
+}
+
+void Bar::update(float elapsed)
+{
+	GUI::update(elapsed);
+	if (e)
+	{
+		if (!e->active)
+		{
+			active = false;
+		}
+		else
+		{
+			current = e->health;
+			if (!fixed)
+			{
+				position = e->position;
+				position.x -= e->size.x / 2;
+				position.y += e->size.y / 2;
+			}
+		}
+	}
 }

@@ -80,12 +80,16 @@
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="Bar.cpp" />
+    <ClCompile Include="Compass.cpp" />
+    <ClCompile Include="DustEmitter.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="gui.cpp" />
     <ClCompile Include="KeyStack.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix.cpp" />
+    <ClCompile Include="Menu.cpp" />
     <ClCompile Include="MsgBox.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="ParticleEmitter.cpp" />
@@ -96,6 +100,7 @@
     <ClCompile Include="Cluster.cpp" />
     <ClCompile Include="Planet.cpp" />
     <ClCompile Include="Hook.cpp" />
+    <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="TextDisplay.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Vector.cpp" />
@@ -105,10 +110,13 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="Bar.h" />
     <ClInclude Include="Cluster.h" />
+    <ClInclude Include="Compass.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GUI.h" />
+    <ClInclude Include="DustEmitter.h" />
+    <ClInclude Include="Menu.h" />
     <ClInclude Include="TextDisplay.h" />
     <ClInclude Include="Weapon.h" />
     <ClInclude Include="MsgBox.h" />

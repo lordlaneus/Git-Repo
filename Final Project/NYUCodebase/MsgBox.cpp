@@ -14,7 +14,7 @@ MsgBox::MsgBox(Sprite bg, Sprite font)
 	this->font = font;
 	size = Vector(150, 80);
 	position = Vector(5, 10);
-	show = false;
+	visible= false;
 }
 
 void MsgBox::render(ShaderProgram* program)

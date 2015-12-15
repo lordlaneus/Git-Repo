@@ -12,6 +12,7 @@ public:
 	Vector dir;
 	Vector size;
 	Animation anim;
+	float damage = 10;
 	float maxLifetime = .5;
 	float lifetime = 0;
 

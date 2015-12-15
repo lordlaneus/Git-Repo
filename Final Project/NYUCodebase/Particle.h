@@ -5,6 +5,10 @@
 
 class Particle {
 public:
+	float u;
+	float v;
+	float spriteWidth;
+	float spriteHeight;
 	Particle();
 	Vector start;
 	Vector position;

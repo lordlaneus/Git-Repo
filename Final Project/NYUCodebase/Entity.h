@@ -14,6 +14,8 @@ class Player;
 class Entity {
 public:
 	Game* g;
+	float maxHealth;
+	float health;
 	float coolDown;
 	float hurt;
 	bool active = true;

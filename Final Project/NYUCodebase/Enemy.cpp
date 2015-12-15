@@ -1,20 +1,32 @@
 #include "Enemy.h"
 
+#include "Bar.h"
+#include "Util.h"
 using namespace std;
 
+Enemy::Enemy()
+{
+
+}
 Enemy::Enemy(Game* g, Vector position) :
 Entity(g)
 {
 	size = Vector(5, 5);
 	baseSize = size;
+	maxHealth = startHealth;
+	health = maxHealth;
 	this->position = position;
 	type = enemy;
 	home = position;
-	Sprite s = g->sprites["dust"];
-	float coolDown = fireRate;
-	s.index = 1;
+	float coolDown = fireRate + Util::randFloat();
 	sprite = g->sprites["enemy"];
+	bar = new Bar(g->sprites["gui"], maxHealth, 4, 1);
+	bar->e = this;
+	bar->fixed = false;
+	bar->visible = false;
 	
+	g->indicators.push_back(bar);
+
 }
 void Enemy::die()
 {
@@ -25,10 +37,10 @@ void Enemy::die()
 void Enemy::fire()
 {
 	Projectile* p = new Projectile(g, position);
-	p->velocity = (g->player->position - position).normalize(50);
+	p->velocity = (g->player->position - position).normalize(projectileSpeed);
 	g->entities.push_back(p);
 	g->playSound("fire");
-	coolDown = fireRate;
+	coolDown = fireRate + Util::randFloat();
 }
 void Enemy::playerCollision(Player* p)
 {
@@ -37,7 +49,7 @@ void Enemy::playerCollision(Player* p)
 		p->takeDamage(5);
 	}
 }
-void Enemy::takeDamage(float dmg, Vector v)
+void Enemy::takeDamage(float dmg)
 {
 	if (hurt <= 0)
 	{
@@ -48,8 +60,8 @@ void Enemy::takeDamage(float dmg, Vector v)
 		{
 			die();
 		}
-		velocity = velocity + v.normalize(1);
 	}
+	bar->show(2.5);
 }
 void Enemy::update(float elapsed)
 {
@@ -74,15 +86,39 @@ void Enemy::update(float elapsed)
 			state = returning;
 			coolDown = fireRate;
 		}
-		if (position.distance(g->player->position) < circleRange)
+		if (position.distance(g->player->position) <= circleRange)
 		{
-			velocity = (g->player->position - position).normalize(speed).rotate(M_PI / 2);
+			state = circle;
 		}
-	else
-		{
-			velocity = (g->player->position - position).normalize(speed);
-		}
+		velocity = (g->player->position - position).normalize(speed);
+			
 		
+	}
+	else if (state == circle)
+	{
+		coolDown -= elapsed;
+		float m = coolDown / fireRate;
+		float puff = m*(1 - maxPuff) / puffStart + maxPuff;
+		if (puff < 1)
+		{
+			puff = 1;
+		}
+		size = baseSize*puff;
+
+		if (coolDown < 0)
+		{
+			fire();
+		}
+		if (position.distance(g->player->position) > detectionRange)
+		{
+			state = returning;
+			coolDown = fireRate;
+		}
+		if (position.distance(g->player->position) > circleRange)
+		{
+			state = aggro;
+		}
+		velocity = (g->player->position - position).normalize(speed*circleDir).rotate(M_PI / 2);
 	}
 	else if (state == alert)
 	{
@@ -113,12 +149,40 @@ void Enemy::update(float elapsed)
 	{
 		velocity = (position - g->player->position).normalize(speed);
 	}
+	//avoid planets
+	Planet* p = g->cluster.checkCollision(position);
+	if (p&&p->type!=Planet::star)
+	{
+		if (state != circle)
+		{
+			position = position + (position - p->position).normalize(p->size / 2 - (position.distance(p->position)));
+			if (g->cluster.checkCollision(position + velocity))
+			{
+				if (velocity.dot((position - p->position).rotate(M_PI/2)) > 0)
+				{
+					velocity = (position - p->position).rotate(M_PI / 2).normalize(speed*landBonus);
+				}
+				else
+				{
+					velocity = (position - p->position).rotate(-M_PI / 2).normalize(speed*landBonus);
+				}
+			}
+		}
+		else
+		{
+			if (g->cluster.checkCollision(position + velocity))
+			{
+				position = position + (position - p->position).normalize(p->size / 2 - (position.distance(p->position)));
+				circleDir *= -1;
+			}
+		}
+	}
 }
 void Enemy::render(ShaderProgram* program)
 {
 	if (hurt > 0)
 	{
-		if (state==aggro)
+		if (state==aggro || state == circle)
 		{
 			sprite.index = 3;
 		}
@@ -129,7 +193,7 @@ void Enemy::render(ShaderProgram* program)
 	}
 	else
 	{
-		if (state == aggro)
+		if (state == aggro || state == circle)
 		{
 			sprite.index = 1;
 		}

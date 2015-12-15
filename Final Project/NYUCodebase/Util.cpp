@@ -26,20 +26,28 @@ GLuint Util::loadImage(const char *path)
 
 }
 
-void Util::drawText(ShaderProgram* program, int fontTexture, std::string text, float x, float y, float size, float spacing) {
+void Util::drawText(ShaderProgram* program, int fontTexture, std::string text, float x, float y, float size, float spacing, bool centered) {
 	float texture_size = 1.0 / 16.0f;
 	std::vector<float> vertexData;
 	std::vector<float> texCoordData;
 	Matrix modelMatrix;
 	Matrix viewMatrix;
-	
-	modelMatrix.Translate(x - (size* (text.length()+1) / 2), y, 0);
+
+	if (centered)
+	{
+		modelMatrix.Translate(x - (size* (text.length() + 1) / 2), y, 0);
+	}
+	else
+	{
+		modelMatrix.Translate(x, y, 0);
+	}
 
 	program->setViewMatrix(viewMatrix);
 	program->setModelMatrix(modelMatrix);
 	for (int i = 0; i < text.size(); i++) {
 		float texture_x = (float)(((int)text[i]) % 16) / 16.0f;
 		float texture_y = (float)(((int)text[i]) / 16) / 16.0f;
+
 		vertexData.insert(vertexData.end(), {
 			((size + spacing) * i) + (-0.5f * size), 0.5f * size,
 			((size + spacing) * i) + (-0.5f * size), -0.5f * size,

@@ -12,7 +12,7 @@ Cluster::Cluster(int size,Sprite s)
 	y = 0;
 	sprite = s;
 	Planet home(sprite);
-	home.size = 30;
+	home.size = 50;
 	home.sprite.index = 0;
 	planets.push_back(home);
 	for (int i = 0; i < size; i++)
@@ -23,16 +23,19 @@ Cluster::Cluster(int size,Sprite s)
 			p.type = Planet::star;
 			p.sprite.index = 7;
 		}
-		else
-		{
-			p.sprite.index = rand() % 6 + 1;
-		}
 		p.position = Vector(1, 1);
 		do
 		{
-			p.position.rotate(Util::randFloat()*M_PI * 2);
-			p.position.normalize(Util::randFloat() * 250);
-			p.size = static_cast <float> (Util::randFloat() * 20) + 10;
+			float dist = Util::randFloat() * radius;
+			float angle = Util::randFloat()*M_PI * 2;
+			p.position.rotate(angle);
+			p.position.normalize(dist);
+
+			p.size = (1 - dist / radius) * 20 + 10 + Util::randFloat() * 10;
+			if (p.type != Planet::star)
+			{
+				p.sprite.index = calculatePlanetType(dist);
+			}
 		} while (!p.validIn(*this));
 		planets.push_back(p);
 	}
@@ -50,6 +53,12 @@ Planet* Cluster::checkCollision(Vector v)
 		}
 	}
 	return NULL;
+}
+int Cluster::calculatePlanetType(float dist)
+{
+	float type = 6 * dist / radius;
+	type += Util::randFloat();
+	return type;
 }
 void Cluster::render(ShaderProgram *program)
 {

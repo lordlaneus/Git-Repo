@@ -96,6 +96,7 @@ void Entity::render(ShaderProgram *program)
 		u, v + spriteHeight,
 		u + spriteWidth, v,
 		u, v,
+
 		u + spriteWidth, v,
 		u, v + spriteHeight,
 		u + spriteWidth, v + spriteHeight

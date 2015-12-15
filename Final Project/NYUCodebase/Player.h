@@ -14,14 +14,15 @@ class Hook;
 class Weapon;
 class Player: public Entity {
 public:
+	enum State{inAir,onGround,dying};
 	Hook* hook;
 	Planet* planet;
 	Weapon* sword;
 	KeyStack wasd;
-	bool onGround;
+	State state = onGround;
+	float deathTime = 1;
+	Animation death;
 	float hurt = 0;
-	float maxHealth = 100;
-	float health = 100;
 	float walkSpeed = 75;
 	float jumpPower = 50;
 	float walking = 0;

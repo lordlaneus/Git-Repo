@@ -12,10 +12,10 @@ public:
 	ParticleEmitter(int pCount=20);
 	
 	void update(float elapsed);
-	void render(ShaderProgram*);
-	void reset(Particle &p);
-	void trigger();
-	void start();
+	virtual void render(ShaderProgram*);
+	virtual void reset(Particle &p);
+	virtual void trigger();
+	virtual void start();
 
 
 	Vector position;

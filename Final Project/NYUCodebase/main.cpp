@@ -1,5 +1,5 @@
 #ifdef _WINDOWS
-	#include <GL/glew.h>
+#include <GL/glew.h>
 #endif
 #include "ShaderProgram.h"
 #include "Matrix.h"
@@ -25,6 +25,7 @@
 SDL_Window* displayWindow;
 ShaderProgram* program;
 bool fs = false;
+
 
 
 
@@ -86,10 +87,11 @@ int main(int argc, char *argv[])
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	Game g;
-
+	Util::drawText(program, g.sprites["font"].texture, "PRESS \"ENTER\"",80,50,2,1);
+	SDL_GL_SwapWindow(displayWindow);
 	while (g.state != Game::done)
 	{
-		if (g.state == Game::title)
+		if (g.state == Game::ready)
 		{
 			while (SDL_PollEvent(&event)) {
 				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
@@ -99,14 +101,88 @@ int main(int argc, char *argv[])
 				{
 					switch (event.key.keysym.sym)
 					{
-					case SDLK_SPACE:
+					case SDLK_TAB:
+						toggleFullScreen();
+						break;
 					case SDLK_RETURN:
-						g.state = Game::play;
-						g.msgBox.show = false;
+						g.state = Game::startup;
+						g.playSound("startup");
 						lastFrameTime = (float)SDL_GetTicks() / 1000;
 						break;
-					case SDLK_ESCAPE:
-						g.state = Game::done;
+					}
+				}
+			}
+			
+		}
+		else if (g.state == Game::startup)
+		{
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
+					g.state = Game::done;
+				}
+				else if (event.type == SDL_KEYUP)
+				{
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_TAB:
+						toggleFullScreen();
+						break;
+					}
+				}
+			}
+			
+			float totalTime = (float)SDL_GetTicks() / 1000;
+			float totalTick = totalTime - lastFrameTime;
+			lastFrameTime = totalTime;
+
+			if (g.startupTimer > g.startupLength)
+			{
+				g.state = Game::title;
+				g.playMusic("bgm");
+			}
+			g.startupTimer += totalTick;
+			//render
+			g.start(program);
+			SDL_GL_SwapWindow(displayWindow);
+		}
+		else if (g.state == Game::title)
+		{
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
+					g.state = Game::done;
+				}
+				else if (event.type == SDL_KEYUP)
+				{
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_UP:
+					case SDLK_w:
+						g.mainMenu.up();
+						g.playSound("boop");
+						break;
+					case SDLK_DOWN:
+					case SDLK_s:
+						g.mainMenu.down();
+						g.playSound("boop");
+						break;
+					case SDLK_SPACE:
+					case SDLK_RETURN:
+					case SDLK_e:
+						if (g.mainMenu.selected == 0)
+						{
+							g.state = Game::play;
+							g.msgBox.visible = false;
+							lastFrameTime = (float)SDL_GetTicks() / 1000;
+							
+						}
+						else if (g.mainMenu.selected == 1)
+						{
+
+						}
+						else if (g.mainMenu.selected == 2)
+						{
+							g.state = Game::done;
+						}
 						break;
 					case SDLK_TAB:
 						toggleFullScreen();
@@ -116,91 +192,88 @@ int main(int argc, char *argv[])
 			}
 			//render
 			glClear(GL_COLOR_BUFFER_BIT);
-			g.renderBG(program);
-			GLuint font = g.sprites["font"].texture;
-			Util::drawText(program, font, "Gravity Well", 80, 50, 10, 2);
-			Util::drawText(program, font, "Press \"Enter\"", 80, 35, 5, 2);
+			g.render(program);
 			SDL_GL_SwapWindow(displayWindow);
 		}
-		else if (g.state==Game::play) {
+		else if (g.state == Game::play) {
 			while (SDL_PollEvent(&event)) {
- 			if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
-				g.state = Game::done;
-				done = true;
-			}
-			if (event.type == SDL_MOUSEBUTTONDOWN) {
-				float unitX = (((float)event.button.x / 1280) * 160);
-				float unitY = (((float)(720 - event.button.y) / 720) * 100);
-				unitX += g.player->position.x - 80;
-				unitY += g.player->position.y - 50;
-				if (event.button.button == SDL_BUTTON_RIGHT)
-				{
-					g.player->hook->shoot(unitX, unitY);
+				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
+					g.state = Game::done;
+					done = true;
 				}
-				else
+				if (event.type == SDL_MOUSEBUTTONDOWN) {
+					float unitX = (((float)event.button.x / 1280) * 160);
+					float unitY = (((float)(720 - event.button.y) / 720) * 100);
+					unitX += g.player->position.x - 80;
+					unitY += g.player->position.y - 50;
+					if (event.button.button == SDL_BUTTON_RIGHT)
+					{
+						g.player->hook->shoot(unitX, unitY);
+					}
+					else
+					{
+						g.player->attack(Vector(unitX, unitY));
+					}
+				}
+				if (event.type == SDL_KEYDOWN&& event.key.repeat == 0)
 				{
-					g.player->attack(Vector(unitX, unitY));
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_w:
+					case SDLK_a:
+					case SDLK_s:
+					case SDLK_d:
+						g.player->wasd.add(event.key.keysym.sym);
+						g.player->walk();
+						break;
+					}
+				}
+				if (event.type == SDL_KEYUP)
+				{
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_w:
+					case SDLK_a:
+					case SDLK_s:
+					case SDLK_d:
+						g.player->wasd.remove(event.key.keysym.sym);
+						g.player->walk();
+						break;
+					case SDLK_SPACE:
+						g.player->jump();
+						break;
+					case SDLK_ESCAPE:
+						g.pause();
+						break;
+					case SDLK_TAB:
+						toggleFullScreen();
+						break;
+					}
 				}
 			}
-			if (event.type == SDL_KEYDOWN&& event.key.repeat == 0)
+
+			//tick
+			float totalTime = (float)SDL_GetTicks() / 1000;
+			float totalTick = totalTime - lastFrameTime;
+
+			lastFrameTime = totalTime;
+			do
 			{
-				switch (event.key.keysym.sym)
-				{
-				case SDLK_w:
-				case SDLK_a:
-				case SDLK_s:
-				case SDLK_d:
-					g.player->wasd.add(event.key.keysym.sym);
-					g.player->walk();
-					break;
-				}
-			}
-			if (event.type == SDL_KEYUP)
-			{
-				switch (event.key.keysym.sym)
-				{
-				case SDLK_w:
-				case SDLK_a:
-				case SDLK_s:
-				case SDLK_d:
-					g.player->wasd.remove(event.key.keysym.sym);
-					g.player->walk();
-					break;
-				case SDLK_SPACE:
-					g.player->jump();
-					break;
-				case SDLK_ESCAPE:
-					g.pause();
-					break;
-				case SDLK_TAB:
-					toggleFullScreen();
-					break;
-				}
-			}
+				float tick = totalTick < maximumTick ? totalTick : maximumTick;
+				g.update(tick);
+				totalTick -= maximumTick;
+			} while (totalTick > maximumTick);
+			//render
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			Matrix view;
+			view.Translate(-g.player->position.x + 80, -g.player->position.y + 50, 0);
+			program->setViewMatrix(view);
+			g.render(program);
+
+
+			SDL_GL_SwapWindow(displayWindow);
 		}
-
-				//tick
-				float totalTime = (float)SDL_GetTicks() / 1000;
-				float totalTick = totalTime - lastFrameTime;
-
-				lastFrameTime = totalTime;
-				do
-				{
-					float tick = totalTick < maximumTick ? totalTick : maximumTick;
-					g.update(tick);
-					totalTick -= maximumTick;
-				} while (totalTick > maximumTick);
-				//render
-				glClear(GL_COLOR_BUFFER_BIT);
-
-				Matrix view;
-				view.Translate(-g.player->position.x + 80, -g.player->position.y + 50, 0);
-				program->setViewMatrix(view);
-				g.render(program);
-
-
-				SDL_GL_SwapWindow(displayWindow);
-			}
 		else if (g.state == Game::paused)
 		{
 			while (SDL_PollEvent(&event)) {
@@ -211,24 +284,36 @@ int main(int argc, char *argv[])
 				{
 					switch (event.key.keysym.sym)
 					{
-					case SDLK_ESCAPE:
-										case SDLK_RETURN:
-					case SDLK_SPACE:
-						g.state = Game::play;
-						g.msgBox.show = false;
-						lastFrameTime=(float)SDL_GetTicks() / 1000;
-					break;
+					case SDLK_UP:
 					case SDLK_w:
-					case SDLK_a:
+						g.pauseMenu.up();
+						g.player->wasd.remove(event.key.keysym.sym);
+						g.playSound("boop");
+						break;
+					case SDLK_DOWN:
 					case SDLK_s:
+						g.pauseMenu.down();
+						g.player->wasd.remove(event.key.keysym.sym);
+						g.playSound("boop");
+						break;
+					case SDLK_RETURN:
+					case SDLK_SPACE:
+						case SDLK_e :
+						if (g.pauseMenu.selected == 0)
+						{
+							g.state = Game::play;
+							lastFrameTime = (float)SDL_GetTicks() / 1000;
+						}
+						else
+						{
+
+							g.reset();
+						}
+						g.pauseMenu.visible = false;
+						break;
+					case SDLK_a:
 					case SDLK_d:
 						g.player->wasd.remove(event.key.keysym.sym);
-						break;
-					case SDLK_r:
-						g.reset();
-						break;
-					case SDLK_q:
-						g.state = Game::done;
 						break;
 					case SDLK_TAB:
 						toggleFullScreen();
@@ -237,6 +322,54 @@ int main(int argc, char *argv[])
 				}
 			}
 			g.render(program);
+
+			SDL_GL_SwapWindow(displayWindow);
+		}
+		else if (g.state == Game::victory)
+		{
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
+					g.state = Game::done;
+				}
+				if (event.type == SDL_KEYUP)
+				{
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_UP:
+					case SDLK_w:
+						g.victoryMenu.up();
+						g.playSound("boop");
+						break;
+					case SDLK_DOWN:
+					case SDLK_s:
+						g.victoryMenu.down();
+						g.playSound("boop");
+						break;
+					case SDLK_SPACE:
+					case SDLK_RETURN:
+					case SDLK_e:
+						g.victoryMenu.visible = false;
+						if (g.victoryMenu.selected == 0)
+						{
+							g.reset();
+						}
+						else
+						{
+							g.state = Game::play;
+							g.exploring = true;
+							lastFrameTime = (float)SDL_GetTicks() / 1000;
+						}
+						break;
+
+					case SDLK_TAB:
+						toggleFullScreen();
+						break;
+					}
+				}
+			}
+			g.render(program);
+
+			SDL_GL_SwapWindow(displayWindow);
 		}
 		else if (g.state == Game::gameOver)
 		{
@@ -248,12 +381,29 @@ int main(int argc, char *argv[])
 				{
 					switch (event.key.keysym.sym)
 					{
-					case SDLK_r:
-						g.reset();
+					case SDLK_UP:
+					case SDLK_w:
+						g.gameOverMenu.up();
+						g.playSound("boop");
 						break;
-					case SDLK_q:
-						g.state = Game::done;
+					case SDLK_DOWN:
+					case SDLK_s:
+						g.gameOverMenu.down();
+						g.playSound("boop");
 						break;
+					case SDLK_SPACE:
+					case SDLK_RETURN:
+					case SDLK_e:
+						if (g.gameOverMenu.selected == 0)
+						{
+							g.reset();
+						}
+						else
+						{
+							g.state = Game::done;
+						}
+						break;
+
 					case SDLK_TAB:
 						toggleFullScreen();
 						break;
@@ -261,6 +411,8 @@ int main(int argc, char *argv[])
 				}
 			}
 			g.render(program);
+
+			SDL_GL_SwapWindow(displayWindow);
 		}
 		else if (g.state == Game::message)
 		{
@@ -275,10 +427,11 @@ int main(int argc, char *argv[])
 					case SDLK_ESCAPE:
 					case SDLK_RETURN:
 					case SDLK_SPACE:
+					case SDLK_e:
 						g.state = Game::play;
-						g.msgBox.show = false;
-						lastFrameTime=(float)SDL_GetTicks() / 1000;
-					break;
+						g.msgBox.visible = false;
+						lastFrameTime = (float)SDL_GetTicks() / 1000;
+						break;
 					case SDLK_w:
 					case SDLK_a:
 					case SDLK_s:
@@ -298,7 +451,6 @@ int main(int argc, char *argv[])
 			SDL_GL_SwapWindow(displayWindow);
 		}
 	}
-		SDL_Quit();
-		return 0;
-	}
-	
+	SDL_Quit();
+	return 0;
+}

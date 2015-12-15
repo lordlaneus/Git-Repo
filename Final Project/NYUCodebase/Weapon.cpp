@@ -84,7 +84,8 @@ void Weapon::update(float elapsed)
 	if (active)
 	{
 		lifetime += elapsed;
-		position = player->position + dir.normalize(lifetime/maxLifetime*range);
+		//position = player->position + dir.normalize(lifetime/maxLifetime*range);
+		position = position + dir.normalize(range/maxLifetime)*elapsed;
 		float m = lifetime / maxLifetime;
 		sprite.index = anim.getFrame(m);
 		if (lifetime > maxLifetime)

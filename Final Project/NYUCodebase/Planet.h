@@ -11,12 +11,14 @@ public:
 	enum Type{moon, star};
 	Planet();
 	Planet(Sprite, float=0, float=0, float=1, float=1);
+	
 	float mass();
 	void render(ShaderProgram*);
 	bool validIn(Cluster);
 
 	Type type = moon;
 	bool on;
+	float damage = 20;
 	Vector position;
 	float size;
 	float density;

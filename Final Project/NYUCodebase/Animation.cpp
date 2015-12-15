@@ -9,7 +9,10 @@ void Animation::addFrame(int frame, float length)
 }
 int Animation::getFrame(float time)
 {
-	time = fmod(time, 1);
+	if (loop)
+	{
+		time = fmod(time, 1);
+	}
 	time *= length();
 	for (int i = 0;i < timing.size(); i++)
 	{
@@ -19,6 +22,7 @@ int Animation::getFrame(float time)
 			return frames[i];
 		}
 	}
+	return frames.back();
 }
 float Animation::length()
 {

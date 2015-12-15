@@ -1,5 +1,6 @@
 #include "Projectile.h";
 #include "Util.h"
+#include "Planet.h"
 #include "Vector.h"
 using namespace std;
 Projectile::Projectile()
@@ -14,8 +15,7 @@ Entity(g)
 	position = pos;
 	size = Vector(2,2);
 	pe = ParticleEmitter(20);
-	sprite = g->sprites["dust"];
-	sprite.index = 7;
+	sprite = g->sprites["particles"];
 	pe.sprite = sprite;
 	pe.loop = true;
 	pe.startSize = 2;
@@ -32,7 +32,7 @@ Entity(g)
 }
 void Projectile::render(ShaderProgram* program)
 {
-	
+	Entity::render(program);
 	pe.render(program);
 }
 
@@ -42,7 +42,8 @@ void Projectile::update(float elapsed)
 	pe.position = position;
 	pe.update(elapsed);
 	lifetime += elapsed;
-	if (lifetime > maxLifetime)
+	Planet* p = g->cluster.checkCollision(position);
+	if (lifetime > maxLifetime || (p && p->type!=Planet::star))
 	{
 		active = false;
 	}
