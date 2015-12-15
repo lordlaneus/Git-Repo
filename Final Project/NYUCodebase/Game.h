@@ -5,6 +5,7 @@
 #include "Cluster.h"
 #include "Player.h"
 #include "GUI.h"
+#include "Cursor.h"
 #include "Bar.h"
 #include "Menu.h"
 #include "MsgBox.h"
@@ -23,7 +24,7 @@
 class Player;
 class Game {
 public:
-	int startupLength = .5;
+	int startupLength = 3;
 	float startupTimer = 0;
 	int totalEnemies = 10;
 	bool exploring = false;
@@ -35,6 +36,7 @@ public:
 	std::map<std::string, Sprite> sprites;
 	std::map < std::string, Mix_Chunk*> sounds;
 	std::map < std::string, Mix_Music*> music;
+	Cursor cursor;
 	Menu mainMenu;
 	Menu gameOverMenu;
 	Menu victoryMenu;
@@ -62,6 +64,7 @@ public:
 	void renderBG(ShaderProgram*);
 	void render(ShaderProgram*);
 	void pause();
+	void killAll();
 	void showMsg(std::string msg, std::string subMsg1 = "", std::string subMsg2 = "", std::string subMsg3 = "");
 	void triggerDust(Vector position, Planet p,float speed);
 	void triggerParticles(ParticleEmitter& pe, Vector position);

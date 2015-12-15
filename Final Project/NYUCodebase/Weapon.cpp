@@ -23,7 +23,7 @@ Weapon::Weapon(Sprite sprite, Player* player)
 void Weapon::swing(Vector d)
 {
 	dir = (d- player->position);
-	position = player->position+dir.normalize(3);
+	position = player->position;
 	rotation = dir.angle();
 	active = true;
 	lifetime = 0;

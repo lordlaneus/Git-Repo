@@ -16,7 +16,7 @@
 #include <vector>
 
 #ifdef _WINDOWS
-	#define RESOURCE_FOLDER ""
+	#define RESOURCE_FOLDER "Resources/"
 #else
 	#define RESOURCE_FOLDER "NYUCodebase.app/Contents/Resources/"
 #endif
@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 	srand(time(NULL));
 	SDL_Init(SDL_INIT_VIDEO);
 	displayWindow = SDL_CreateWindow("Gravity Well", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
+	SDL_SetWindowIcon(displayWindow, IMG_Load("resources\\icon.png"));
 	SDL_GLContext context = SDL_GL_CreateContext(displayWindow);
 	SDL_GL_MakeCurrent(displayWindow, context);
 #ifdef _WINDOWS
@@ -89,6 +90,7 @@ int main(int argc, char *argv[])
 	Game g;
 	Util::drawText(program, g.sprites["font"].texture, "PRESS \"ENTER\"",80,50,2,1);
 	SDL_GL_SwapWindow(displayWindow);
+	SDL_ShowCursor(0);
 	while (g.state != Game::done)
 	{
 		if (g.state == Game::ready)
@@ -177,7 +179,10 @@ int main(int argc, char *argv[])
 						}
 						else if (g.mainMenu.selected == 1)
 						{
-
+							g.killAll();
+							g.exploring = true;
+							g.state = Game::play;
+							
 						}
 						else if (g.mainMenu.selected == 2)
 						{
@@ -200,6 +205,12 @@ int main(int argc, char *argv[])
 				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
 					g.state = Game::done;
 					done = true;
+				}
+				if (event.type == SDL_MOUSEMOTION)
+				{
+					float unitX = (((float)event.motion.x / 1280) * 160);
+					float unitY = (((float)(720 - event.motion.y) / 720) * 100);
+					g.cursor.position = Vector(unitX, unitY);
 				}
 				if (event.type == SDL_MOUSEBUTTONDOWN) {
 					float unitX = (((float)event.button.x / 1280) * 160);
@@ -265,7 +276,6 @@ int main(int argc, char *argv[])
 			} while (totalTick > maximumTick);
 			//render
 			glClear(GL_COLOR_BUFFER_BIT);
-
 			Matrix view;
 			view.Translate(-g.player->position.x + 80, -g.player->position.y + 50, 0);
 			program->setViewMatrix(view);
@@ -298,7 +308,7 @@ int main(int argc, char *argv[])
 						break;
 					case SDLK_RETURN:
 					case SDLK_SPACE:
-						case SDLK_e :
+					case SDLK_e :
 						if (g.pauseMenu.selected == 0)
 						{
 							g.state = Game::play;
@@ -321,6 +331,8 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
+
+			glClear(GL_COLOR_BUFFER_BIT);
 			g.render(program);
 
 			SDL_GL_SwapWindow(displayWindow);
@@ -361,12 +373,19 @@ int main(int argc, char *argv[])
 						}
 						break;
 
+					case SDLK_a:
+					case SDLK_d:
+						g.player->wasd.remove(event.key.keysym.sym);
+						break;
+
 					case SDLK_TAB:
 						toggleFullScreen();
 						break;
 					}
 				}
 			}
+
+			glClear(GL_COLOR_BUFFER_BIT);
 			g.render(program);
 
 			SDL_GL_SwapWindow(displayWindow);
@@ -404,12 +423,18 @@ int main(int argc, char *argv[])
 						}
 						break;
 
+					case SDLK_a:
+					case SDLK_d:
+						g.player->wasd.remove(event.key.keysym.sym);
+						break;
 					case SDLK_TAB:
 						toggleFullScreen();
 						break;
 					}
 				}
 			}
+
+			glClear(GL_COLOR_BUFFER_BIT);
 			g.render(program);
 
 			SDL_GL_SwapWindow(displayWindow);

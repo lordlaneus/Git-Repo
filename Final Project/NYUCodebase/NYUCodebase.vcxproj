@@ -13,6 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{49111BA2-C0AC-4ADA-A952-A55E3AF00AC8}</ProjectGuid>
     <RootNamespace>NYUCodebase</RootNamespace>
+    <ProjectName>Gravity Well</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -111,6 +112,7 @@
     <ClInclude Include="Bar.h" />
     <ClInclude Include="Cluster.h" />
     <ClInclude Include="Compass.h" />
+    <ClInclude Include="Cursor.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />

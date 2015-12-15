@@ -179,6 +179,9 @@
     <ClInclude Include="Compass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Cursor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Assignment 2\NYUCodebase\fragment.glsl">

@@ -8,6 +8,7 @@ Game::Game()
 {
 	addSprite("logo", "resources\\logo.png", 0, 1, 1);
 	addSprite("fade", "resources\\fade.png", 0, 4, 4);
+	addSprite("cursor", "resources\\cursor.png", 0, 1, 1);
 	addSprite("bg", "resources\\background.png",0,1,1);
 	addSprite("planet", "resources\\Planet Sheet.png", 0, 4, 2);
 	addSprite("enemy", "resources\\Enemy Sheet.png", 0, 4, 1);
@@ -39,7 +40,7 @@ Game::Game()
 	mainMenu.lineSpacing = 10;
 	gameOverMenu = mainMenu;
 	mainMenu.addOption("Play");
-	mainMenu.addOption("Help");
+	mainMenu.addOption("Roam");
 	mainMenu.addOption("Quit");
 
 	
@@ -83,6 +84,10 @@ Game::Game()
 	compass.size = Vector(15, 15);
 	gui.push_back(&compass);
 
+	cursor.sprite = sprites["cursor"];
+	cursor.size = Vector(2, 2);
+	gui.push_back(&cursor);
+
 	reset();
 	state = ready;
 	
@@ -100,6 +105,8 @@ void Game::reset()
 	state = title;
 	exploring = false;
 	gameOverMenu.visible = false;
+	health.visible = true;
+	enemyCount.visible = true;
 	cluster = Cluster(100, sprites["planet"]);
 	delete player;
 	player = new Player(this, sprites["player"]);
@@ -118,7 +125,7 @@ void Game::reset()
 
 	for (int i = 0; i < totalEnemies;i++)
 	{
-		float dist = Util::randFloat()*cluster.radius*0.8 + cluster.radius*0.2;
+		float dist = Util::randFloat()*(cluster.radius - 100) + 100;
 		float angle = Util::randFloat()*M_PI * 2;
 		Vector position(1, 1);
 		position.rotate(angle);
@@ -133,6 +140,11 @@ void Game::update(float elapsed)
 	dustEmitter.update(elapsed);
 	fireEmitter.update(elapsed);
 	int enemiesLeft = 0;
+	if (exploring)
+	{
+		health.visible = false;
+		enemyCount.visible = false;
+	}
 	Vector compassReal = player->position;
 	compassReal.y += 40;
 	Entity* closest = NULL;
@@ -355,6 +367,13 @@ void Game::pause()
 	playSound("boop");
 	state = paused;
 
+}
+void Game::killAll()
+{
+	for (int i = 0; i < entities.size(); i++)
+	{
+		entities[i]->active = false;
+	}
 }
 
 void Game::addSprite(string name, const char* path, int i, int w, int h)

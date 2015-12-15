@@ -4,6 +4,12 @@
 #include "ShaderProgram.h"
 class Sprite{
 public:
+
+	bool flipped = false;
+	GLuint texture;
+	int index;
+	int sheetH;
+	int sheetW;
 	Sprite()
 	{
 
@@ -15,11 +21,6 @@ public:
 		sheetH = h;
 		sheetW = w;
 	}
-	bool flipped = false;
-	GLuint texture;
-	int index;
-	int sheetH;
-	int sheetW;
 	void set(GLuint t, int i, int w, int h)
 	{
 		texture = t;

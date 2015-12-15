@@ -103,12 +103,15 @@ void Player::takeDamage(float dmg)
 	{
 		return;
 	}
-	health -= dmg;
-	if (health<= 0)
+	if (!g->exploring)
 	{
-		die();
-		g->playSound("death");
-		return;
+		health -= dmg;
+		if (health <= 0)
+		{
+			die();
+			g->playSound("death");
+			return;
+		}
 	}
 	g->playSound("hurt");
 	hurt = 1;
