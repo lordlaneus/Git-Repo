@@ -51,6 +51,7 @@ Game::Game()
 	gameOverMenu.visible = false;
 	gameOverMenu.bg = &sprites["msg"];
 	gameOverMenu.title = "Game Over";
+	gameOverMenu.showTitle = true;
 	gameOverMenu.margin = 25;
 	victoryMenu = gameOverMenu;
 	pauseMenu = gameOverMenu;
@@ -109,10 +110,10 @@ void Game::reset()
 	gameOverMenu.visible = false;
 	health.visible = true;
 	enemyCount.visible = true;
-	cluster = Cluster(100, sprites["planet"]);
+	delete cluster;
+	cluster = new Cluster(this, 100, sprites["planet"]);
 	delete player;
 	player = new Player(this, sprites["player"]);
-	health.e = player;
 
 	for (int i = 0; i < indicators.size(); i++)
 	{
@@ -127,7 +128,7 @@ void Game::reset()
 
 	for (int i = 0; i < totalEnemies; i++)
 	{
-		float dist = Util::randFloat()*(cluster.radius - 100) + 100;
+		float dist = Util::randFloat()*(cluster->radius - 100) + 100;
 		float angle = Util::randFloat()*M_PI * 2;
 		Vector position(1, 1);
 		position.rotate(angle);
@@ -137,7 +138,7 @@ void Game::reset()
 }
 void Game::update(float elapsed)
 {
-	cluster.update(elapsed);
+	cluster->update(elapsed);
 	player->update(elapsed);
 	dustEmitter.update(elapsed);
 	fireEmitter.update(elapsed);
@@ -147,6 +148,7 @@ void Game::update(float elapsed)
 		health.visible = false;
 		enemyCount.visible = false;
 	}
+	health.current = player->health;
 	Vector compassReal = player->position;
 	compassReal.y += 40;
 	Entity* closest = NULL;
@@ -252,6 +254,38 @@ void Game::start(ShaderProgram *program)
 
 
 }
+vector<Planet> Game::findLights(Vector position)
+{
+	vector<Planet> output;
+	vector<float> dists;
+	for (int i = 0; i < cluster->planets.size(); i++)
+	{
+		Planet p = cluster->planets[i];
+		if (p.type == Planet::star)
+		{
+			if (output.size() < 5)
+			{
+				output.push_back(p);
+				dists.push_back(p.position.distance(position));
+			}
+			else
+			{
+				float d = p.position.distance(position);
+				for (int j = 0; j < output.size(); j++)
+				{
+					if (dists[j] > d)
+					{
+						output[j] = p;
+						dists[j] = d;
+						break;
+					}
+					
+				}
+			}
+		}
+	}
+	return output;
+}
 void Game::renderFade(ShaderProgram *program, int frame)
 {
 	Sprite sprite = sprites["fade"];
@@ -300,19 +334,44 @@ void Game::renderBG(ShaderProgram *program)
 
 
 }
-void Game::render(ShaderProgram *program)
+void Game::renderGui(ShaderProgram* program)
 {
+	glUseProgram(program->programID);
 	if (state == title)
 	{
 		renderBG(program);
 		GLuint font = sprites["font"].texture;
 		Util::drawText(program, font, "Gravity Well", 80, 80, 10, 2);
 		mainMenu.render(program);
-		/*Util::drawText(program, font, "  Play", 80, 55, 6, 2);
-		Util::drawText(program, font, "  Help", 80, 40, 6, 2);
-		Util::drawText(program, font, "  Quit", 80, 25, 6, 2);*/
 	}
 	else if (state != done)
+	{
+		for (int i = 0; i < indicators.size(); i++)
+		{
+			if (!indicators[i]->active)
+			{
+				delete indicators[i];
+				indicators.erase(indicators.begin() + i);
+				i--;
+			}
+			else if (indicators[i]->visible)
+			{
+				indicators[i]->render(program);
+			}
+		}
+		for (int i = 0; i < gui.size(); i++)
+		{
+			if (gui[i]->visible)
+			{
+				gui[i]->render(program);
+			}
+		}
+	}
+}
+void Game::render(ShaderProgram *program)
+{
+	glUseProgram(program->programID);
+	if (state != done)
 	{
 		Matrix view;
 		program->setViewMatrix(view);
@@ -321,7 +380,7 @@ void Game::render(ShaderProgram *program)
 		view.Translate(-player->position.x + 80, -player->position.y + 50, 0);
 		program->setViewMatrix(view);
 
-		cluster.render(program);
+		cluster->render(program);
 		player->render(program);
 		dustEmitter.render(program);
 		fireEmitter.render(program);
@@ -337,29 +396,6 @@ void Game::render(ShaderProgram *program)
 				delete entities[i];
 				entities.erase(entities.begin() + i);
 				i--;
-			}
-		}
-		for (int i = 0; i < indicators.size(); i++)
-		{
-			if (!indicators[i]->active)
-			{
-				delete indicators[i];
-				indicators.erase(indicators.begin() + i);
-				i--;
-			}
-			else if (indicators[i]->visible)
-			{
-				indicators[i]->render(program);
-			}
-		}
-		//gui
-		Matrix viewMatrix;
-		program->setViewMatrix(viewMatrix);
-		for (int i = 0; i < gui.size(); i++)
-		{
-			if (gui[i]->visible)
-			{
-				gui[i]->render(program);
 			}
 		}
 	}
@@ -413,7 +449,7 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 			break;
 		}
 	}
-	else if (currentMenu->title == "GAME OVER")
+	else if (currentMenu->title == "Game Over")
 	{
 		switch (currentMenu->selected)
 		{
@@ -421,6 +457,7 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 			state = title;
 			currentMenu->visible = false;
 			currentMenu = &mainMenu;
+			reset();
 			break;
 		case 1:
 			state = done;
@@ -435,6 +472,7 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 			state = title;
 			currentMenu->visible = false;
 			currentMenu = &mainMenu;
+			reset();
 			break;
 		case 1:
 			exploring = true;
@@ -492,7 +530,7 @@ void Game::triggerDust(Vector position, Planet p, float speed)
 	dustEmitter.velocity = position - p.position;
 	dustEmitter.velocity.normalize(speed);
 
-	dustEmitter.trigger(p);
+	dustEmitter.trigger(&p);
 }
 
 void Game::playSound(string name)

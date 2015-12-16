@@ -1,6 +1,7 @@
 #include "Enemy.h"
 
 #include "Bar.h"
+#include "Planet.h"
 #include "Util.h"
 using namespace std;
 
@@ -150,13 +151,13 @@ void Enemy::update(float elapsed)
 		velocity = (position - g->player->position).normalize(speed);
 	}
 	//avoid planets
-	Planet* p = g->cluster.checkCollision(position);
+	Planet* p = g->cluster->checkCollision(position);
 	if (p&&p->type!=Planet::star)
 	{
 		if (state != circle)
 		{
 			position = position + (position - p->position).normalize(p->size / 2 - (position.distance(p->position)));
-			if (g->cluster.checkCollision(position + velocity))
+			if (g->cluster->checkCollision(position + velocity))
 			{
 				if (velocity.dot((position - p->position).rotate(M_PI/2)) > 0)
 				{
@@ -170,7 +171,7 @@ void Enemy::update(float elapsed)
 		}
 		else
 		{
-			if (g->cluster.checkCollision(position + velocity))
+			if (g->cluster->checkCollision(position + velocity))
 			{
 				position = position + (position - p->position).normalize(p->size / 2 - (position.distance(p->position)));
 				circleDir *= -1;

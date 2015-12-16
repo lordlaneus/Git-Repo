@@ -1,6 +1,7 @@
 
 #include "ShaderProgram.h"
 
+using namespace std;
 ShaderProgram::ShaderProgram(const char *vertexShaderFile, const char *fragmentShaderFile) {
     
     // create the vertex shader
@@ -18,15 +19,18 @@ ShaderProgram::ShaderProgram(const char *vertexShaderFile, const char *fragmentS
     glGetProgramiv(programID, GL_LINK_STATUS, &linkSuccess);
     if(linkSuccess == GL_FALSE) {
         printf("Error linking shader program!\n");
-    }
-    
+    } 
+
+	lightPositionUniform = glGetUniformLocation(programID, "lightPositions");
+	lightColorUniform = glGetUniformLocation(programID, "lightColors");
+
+	alphaUniform = glGetUniformLocation(programID, "alpha");
     modelMatrixUniform = glGetUniformLocation(programID, "modelMatrix");
     projectionMatrixUniform = glGetUniformLocation(programID, "projectionMatrix");
     viewMatrixUniform = glGetUniformLocation(programID, "viewMatrix");
-    
+	
     positionAttribute = glGetAttribLocation(programID, "position");
     texCoordAttribute = glGetAttribLocation(programID, "texCoord");
-    
 }
 
 ShaderProgram::~ShaderProgram() {
@@ -73,13 +77,25 @@ GLuint ShaderProgram::loadShaderFromString(const std::string &shaderContents, GL
     if (compileSuccess == GL_FALSE) {
         GLchar messages[512];
         glGetShaderInfoLog(shaderID, sizeof(messages), 0, &messages[0]);
-        std::cout << messages << std::endl;
+
+
+		std::cout << messages << std::endl;
     }
     
     // return the shader id
     return shaderID;
 }
 
+void ShaderProgram::setLights(Vector position, Vector color)
+{
+	glUniform2f(lightPositionUniform, position.x,position.y);
+	glUniform3f(lightColorUniform, color.x, color.y, color.z);
+}
+void ShaderProgram::setAlpha(float alpha)
+{
+	glUseProgram(programID);
+	glUniform1f(alphaUniform,alpha);
+}
 void ShaderProgram::setViewMatrix(const Matrix &matrix) {
     glUseProgram(programID);
     glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, matrix.ml);

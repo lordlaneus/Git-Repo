@@ -1,4 +1,4 @@
-#include "Projectile.h";
+#include "Projectile.h"
 #include "Util.h"
 #include "Planet.h"
 #include "Vector.h"
@@ -42,7 +42,7 @@ void Projectile::update(float elapsed)
 	pe.position = position;
 	pe.update(elapsed);
 	lifetime += elapsed;
-	Planet* p = g->cluster.checkCollision(position);
+	Planet* p = g->cluster->checkCollision(position);
 	if (lifetime > maxLifetime || (p && p->type!=Planet::star))
 	{
 		active = false;

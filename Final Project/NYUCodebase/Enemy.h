@@ -1,6 +1,7 @@
 #pragma once
+
+#include "Entity.h"
 #include "Game.h"
-#include "Entity.h";
 #include "ShaderProgram.h"
 #include "Projectile.h"
 #include "Bar.h"

@@ -3,14 +3,14 @@
 #include <vector>
 
 using namespace std;
-
 Planet::Planet()
 {
 
 }
-Planet::Planet(Sprite sprite, float x, float y, float size, float density)
+Planet::Planet(Cluster* cluster, Sprite sprite, float x, float y, float size, float density)
 {
 
+	this->cluster = cluster;
 	this->sprite = sprite;
 	position.x = x;
 	on = false;
@@ -35,6 +35,10 @@ float Planet::mass()
 {
 	return size*density;
 }
+Vector Planet::getColor()
+{
+	return Vector(1, 1, 1);
+}
 
 void Planet::render(ShaderProgram *program){
 
@@ -58,6 +62,7 @@ void Planet::render(ShaderProgram *program){
 
 
 		program->setModelMatrix(modelMatrix);
+		program->setLights(cluster->g->player->position, getColor());
 
 		//drawing
 		glUseProgram(program->programID);

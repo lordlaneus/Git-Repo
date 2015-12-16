@@ -1,7 +1,9 @@
 #pragma once
 #include "Entity.h"
-#include "ParticleEmitter.h";
-#include "Sprite.h"
+#include "ParticleEmitter.h"
+#include "Game.h"
+
+class Player;
 class Projectile : public Entity
 {
 public:

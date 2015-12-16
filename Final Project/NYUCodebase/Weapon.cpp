@@ -1,4 +1,4 @@
-#include "Weapon.h";
+#include "Weapon.h"
 #define TAU 1.57079
 using namespace std;
 Weapon::Weapon()

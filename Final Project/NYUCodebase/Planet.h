@@ -3,19 +3,15 @@
 
 #include "ShaderProgram.h"
 #include "Sprite.h"
+#include "Cluster.h"
 #include "Vector.h"
 #include <vector>
+#include "Game.h"
+
 class Cluster;
 class Planet {
 public:
 	enum Type{moon, star};
-	Planet();
-	Planet(Sprite, float=0, float=0, float=1, float=1);
-	
-	float mass();
-	void render(ShaderProgram*);
-	bool validIn(Cluster);
-
 	Type type = moon;
 	bool on;
 	float damage = 20;
@@ -24,5 +20,13 @@ public:
 	float density;
 	Sprite sprite;
 	Cluster* cluster;
+
+	Planet();
+	Planet(Cluster*,Sprite, float=0, float=0, float=1, float=1);
+	
+	float mass();
+	Vector getColor();
+	void render(ShaderProgram*);
+	bool validIn(Cluster);
 
 };

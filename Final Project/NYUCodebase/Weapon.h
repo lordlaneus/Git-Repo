@@ -1,8 +1,9 @@
 #pragma once
-#include "Sprite.h";
+#include "Sprite.h"
 #include "Animation.h"
 #include "Player.h"
 #include "Vector.h"
+#include "Entity.h"
 class Weapon: public Entity
 {
 public:

@@ -1,17 +1,18 @@
 #include "Player.h"
 #include "Enemy.h"
+#include "Projectile.h"
 using namespace std;
 
-Player::Player():Entity()
+Player::Player()
 {
 	
 
 }
 
-Player::Player(Game* g, Sprite sprite) :
-Entity(g)
+Player::Player(Game* g, Sprite sprite) 
 {
-	planet = &g->cluster.planets[0];
+	this->g = g;
+	planet = &g->cluster->planets[0];
 	maxHealth = 100;
 	health = maxHealth;
 	hook = new Hook(this);
@@ -20,7 +21,6 @@ Entity(g)
 	this->sprite = sprite;
 	position.y = 15;
 	size = Vector(4, 7);
-	type = player;
 
 	death.loop = false;
 	death.addFrame(2, 0.05);
@@ -31,7 +31,7 @@ Entity(g)
 	death.addFrame(9, 0.05);
 
 }
-bool Player::collidesP(Planet p)
+bool Player::collidesP(Planet& p)
 {
 	if (p.on)
 	{
@@ -39,8 +39,6 @@ bool Player::collidesP(Planet p)
 	}
 	return position.distance(p.position) < p.size / 2 + size.y / 4;
 }
-
-
 void Player::attack(Vector dir)
 {
 	if (!sword->active)
@@ -145,7 +143,7 @@ void Player::walk()
 		walking = 0;
 	}
 }
-void Player::pop(Planet p)
+void Player::pop(Planet& p)
 {
 	
 	Vector v = position - p.position;
@@ -200,10 +198,10 @@ void Player::update(float elapsed)
 	Vector totalPull;
 	float maxPull = 0;
 	Planet majorPuller;
-	for (int i = 0; i < g->cluster.planets.size(); i++)
+	for (int i = 0; i < g->cluster->planets.size(); i++)
 	{
 
-		Planet p = g->cluster.planets[i];
+		Planet p = g->cluster->planets[i];
 
 		Vector pull = p.position - position;
 		pull.normalize();
@@ -218,7 +216,8 @@ void Player::update(float elapsed)
 	}
 	if (state == dying)
 	{
-		Entity::update(elapsed);
+		velocity = velocity + accel* elapsed;
+		position = position + velocity * elapsed;
 		if (hurt <= 0)
 		{
 			g->currentMenu = &g->gameOverMenu;
@@ -241,17 +240,18 @@ void Player::update(float elapsed)
 	{
 		accel = totalPull;
 		rotation = (majorPuller.position - position).angle() + M_PI / 2;
-		Entity::update(elapsed);
-		for (int i = 0; i < g->cluster.planets.size(); i++)
+		velocity = velocity + accel *elapsed;
+		position = position + velocity * elapsed;
+		for (int i = 0; i < g->cluster->planets.size(); i++)
 		{
-			if (collidesP(g->cluster.planets[i]))
+			if (collidesP(g->cluster->planets[i]))
 			{
 				
-				land(g->cluster.planets[i]);
+				land(g->cluster->planets[i]);
 			}
 			else
 			{
-				g->cluster.planets[i].on = false;
+				g->cluster->planets[i].on = false;
 			}
 		}
 	}

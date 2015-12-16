@@ -16,14 +16,15 @@
 #include <vector>
 
 #ifdef _WINDOWS
-	#define RESOURCE_FOLDER "Resources/"
+#define RESOURCE_FOLDER "Resources/"
 #else
-	#define RESOURCE_FOLDER "NYUCodebase.app/Contents/Resources/"
+#define RESOURCE_FOLDER "NYUCodebase.app/Contents/Resources/"
 #endif
 
 
 SDL_Window* displayWindow;
 ShaderProgram* program;
+ShaderProgram* guiProgram;
 bool fs = false;
 
 
@@ -60,7 +61,9 @@ int main(int argc, char *argv[])
 	SDL_Event event;
 	bool done = false;
 	//setup
-	program = new ShaderProgram(RESOURCE_FOLDER"vertex_textured.glsl", RESOURCE_FOLDER"fragment_textured.glsl");
+	program = new ShaderProgram(RESOURCE_FOLDER"vertex.glsl", RESOURCE_FOLDER"fragment.glsl");
+	guiProgram = new ShaderProgram(RESOURCE_FOLDER"vertex_gui.glsl", RESOURCE_FOLDER"fragment_gui.glsl");
+
 	Matrix projectionMatrix;
 	Matrix modelMatrix;
 	Matrix viewMatrix;
@@ -71,14 +74,20 @@ int main(int argc, char *argv[])
 	program->setProjectionMatrix(projectionMatrix);
 	program->setViewMatrix(viewMatrix);
 
-	glUseProgram(program->programID);
+
+	guiProgram->setModelMatrix(modelMatrix);
+	guiProgram->setProjectionMatrix(projectionMatrix);
+	guiProgram->setViewMatrix(viewMatrix);
+	guiProgram->setAlpha(1);
+
+
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 
-	
+
 	glViewport(0, 0, 1280, 720);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -87,10 +96,10 @@ int main(int argc, char *argv[])
 
 	Game g;
 	g.lastFrameTime = 0.0f;
-	Util::drawText(program, g.sprites["font"].texture, "PRESS \"ENTER\"",80,50,2,1);
+	Util::drawText(guiProgram, g.sprites["font"].texture, "PRESS \"ENTER\"", 80, 50, 2, 1);
 	SDL_GL_SwapWindow(displayWindow);
 	SDL_ShowCursor(0);
-	
+
 	while (g.state != Game::done)
 	{
 		while (SDL_PollEvent(&event)) {
@@ -197,7 +206,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		if (g.state == Game::startup)
-		{	
+		{
 			float totalTime = (float)SDL_GetTicks() / 1000;
 			float totalTick = totalTime - g.lastFrameTime;
 			g.lastFrameTime = totalTime;
@@ -210,17 +219,11 @@ int main(int argc, char *argv[])
 			}
 			g.startupTimer += totalTick;
 			//render
-			g.start(program);
-			SDL_GL_SwapWindow(displayWindow);
-		}
-		else if (g.state == Game::title)
-		{
-			glClear(GL_COLOR_BUFFER_BIT);
-			g.render(program);
+			g.start(guiProgram);
 			SDL_GL_SwapWindow(displayWindow);
 		}
 		else if (g.state == Game::play) {
-			
+
 			//tick
 			float totalTime = (float)SDL_GetTicks() / 1000;
 			float totalTick = totalTime - g.lastFrameTime;
@@ -239,83 +242,15 @@ int main(int argc, char *argv[])
 			program->setViewMatrix(view);
 			g.render(program);
 
+			g.renderGui(guiProgram);
 
 			SDL_GL_SwapWindow(displayWindow);
 		}
-		else if (g.state == Game::paused)
-		{
-			while (SDL_PollEvent(&event)) {
-				if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
-					g.state = Game::done;
-				}
-				if (event.type == SDL_KEYUP)
-				{
-					switch (event.key.keysym.sym)
-					{
-					case SDLK_UP:
-					case SDLK_w:
-						g.pauseMenu.up();
-						g.player->wasd.remove(event.key.keysym.sym);
-						g.playSound("boop");
-						break;
-					case SDLK_DOWN:
-					case SDLK_s:
-						g.pauseMenu.down();
-						g.player->wasd.remove(event.key.keysym.sym);
-						g.playSound("boop");
-						break;
-					case SDLK_RETURN:
-					case SDLK_SPACE:
-					case SDLK_e :
-						if (g.pauseMenu.selected == 0)
-						{
-							g.state = Game::play;
-							g.lastFrameTime = (float)SDL_GetTicks() / 1000;
-						}
-						else
-						{
-
-							g.reset();
-						}
-						g.pauseMenu.visible = false;
-						break;
-					case SDLK_a:
-					case SDLK_d:
-						g.player->wasd.remove(event.key.keysym.sym);
-						break;
-					case SDLK_TAB:
-						toggleFullScreen();
-						break;
-					}
-				}
-			}
-
-			glClear(GL_COLOR_BUFFER_BIT);
-			g.render(program);
-
-			SDL_GL_SwapWindow(displayWindow);
-		}
-		else if (g.state == Game::victory)
-		{
-
-			glClear(GL_COLOR_BUFFER_BIT);
-			g.render(program);
-
-			SDL_GL_SwapWindow(displayWindow);
-		}
-		else if (g.state == Game::gameOver)
+		else if (g.state!=Game::ready)
 		{
 			glClear(GL_COLOR_BUFFER_BIT);
 			g.render(program);
-
-			SDL_GL_SwapWindow(displayWindow);
-		}
-		else if (g.state == Game::message)
-		{
-			glClear(GL_COLOR_BUFFER_BIT);
-			g.render(program);
-
-
+			g.renderGui(guiProgram);
 			SDL_GL_SwapWindow(displayWindow);
 		}
 	}

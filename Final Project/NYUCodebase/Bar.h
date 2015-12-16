@@ -3,6 +3,9 @@
 #include "Gui.h"
 #include "Sprite.h"
 #include "Entity.h"
+
+
+class Entity;
 class Bar: public GUI
 {
 public:

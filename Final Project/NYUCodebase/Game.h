@@ -1,6 +1,9 @@
 #pragma once
 
 #include "ShaderProgram.h"
+
+#include "Planet.h"
+#include "Entity.h"
 #include "Sprite.h"
 #include "Cluster.h"
 #include "Player.h"
@@ -21,10 +24,12 @@
 #include <SDL_mixer.h>
 #include <vector>
 
+class Cluster;
+class Entity;
 class Player;
 class Game {
 public:
-	int startupLength = 3;
+	int startupLength = .5;
 	float startupTimer = 0;
 	int totalEnemies = 10;
 	bool exploring = false;
@@ -32,7 +37,7 @@ public:
 	enum State { ready, startup, title, play, paused, message, victory, gameOver, done, };
 
 	State state = title;
-	Cluster cluster;
+	Cluster* cluster;
 	Player* player;
 	std::map<std::string, Sprite> sprites;
 	std::map < std::string, Mix_Chunk*> sounds;
@@ -64,8 +69,10 @@ public:
 	void start(ShaderProgram*);
 	void reset();
 	void update(float elapsed);
+	std::vector<Planet> findLights(Vector);
 	void renderFade(ShaderProgram*, int);
 	void renderBG(ShaderProgram*);
+	void renderGui(ShaderProgram*);
 	void render(ShaderProgram*);
 	void pause();
 	void killAll();

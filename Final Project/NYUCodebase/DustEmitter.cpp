@@ -11,9 +11,9 @@ DustEmitter::DustEmitter()
 	startSize = 1;
 	endSize = 0;
 }
-void DustEmitter::trigger(Planet p)
+void DustEmitter::trigger(Planet* p)
 {
-	sprite = p.sprite;
+	sprite = p->sprite;
 	ParticleEmitter::trigger();
 }
 

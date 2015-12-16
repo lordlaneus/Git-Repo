@@ -21,7 +21,7 @@ void Hook::update(float elapsed)
 	if (state == cast)
 	{
 		position = position + velocity*elapsed;
-		anchor = player->g->cluster.checkCollision(position);
+		anchor = player->g->cluster->checkCollision(position);
 		if (anchor)
 		{
 			state = reeling;

@@ -4,11 +4,14 @@
 #include "ShaderProgram.h"
 #include "Planet.h"
 #include "Sprite.h"
+#include "Game.h"
 #include <vector>
 
 class Planet;
+class Game;
 class Cluster{
 public:
+	Game* g;
 	float radius = 300;
 	int x;
 	int y;
@@ -16,7 +19,7 @@ public:
 	std::vector<Planet> planets;
 
 	Cluster();
-	Cluster(int, Sprite);
+	Cluster(Game* g, int, Sprite);
 
 
 	Planet* checkCollision(Vector);

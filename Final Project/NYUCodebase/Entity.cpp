@@ -1,8 +1,10 @@
 #include "Entity.h"
 #include <vector>
+#include "Planet.h"
 #include <math.h>
 
 #define TAU 1.57079
+using namespace std;
 Entity::Entity()
 {
 
@@ -22,7 +24,7 @@ bool Entity::collides(Entity&e)
 		collides(e, cos(e.rotation+TAU), sin(e.rotation+TAU)));
 
 }
-bool Entity::collides(Planet p)
+bool Entity::collides(Planet& p)
 {
 	return (position.distance(p.position) < p.size / 2 + size.y / 4);
 }
@@ -76,11 +78,7 @@ void Entity::update(float elapsed){
 	{
 		hurt -= elapsed;
 	}
-	velocity.x += accel.x *elapsed;
-	velocity.x > 0 ? velocity.x -= friction*elapsed : velocity.x < 0 ? velocity.x += friction*elapsed : velocity.x = 0;
 	position.x += velocity.x*elapsed;
-	velocity.y += accel.y*elapsed;
-	velocity.y > 0 ? velocity.y -= friction*elapsed : velocity.y < 0 ? velocity.y += friction*elapsed : velocity.y = 0;
 	position.y += velocity.y*elapsed;
 	
 }

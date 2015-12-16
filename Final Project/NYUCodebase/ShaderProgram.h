@@ -8,13 +8,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
+#include "Vector.h"
 #include "Matrix.h"
 
 class ShaderProgram {
     public:
         ShaderProgram(const char *vertexShaderFile, const char *fragmentShaderFile);
         ~ShaderProgram();
-    
+
+
+		void setLights(Vector position,Vector color);
+		void setAlpha(float);
         void setModelMatrix(const Matrix &matrix);
         void setProjectionMatrix(const Matrix &matrix);
         void setViewMatrix(const Matrix &matrix);
@@ -24,6 +29,10 @@ class ShaderProgram {
     
         GLuint programID;
     
+		GLuint lightPositionUniform;
+		GLuint lightColorUniform;
+
+		GLuint alphaUniform;
         GLuint projectionMatrixUniform;
         GLuint modelMatrixUniform;
         GLuint viewMatrixUniform;

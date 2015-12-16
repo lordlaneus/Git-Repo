@@ -1,7 +1,8 @@
 #pragma once
 
-#include"ShaderProgram.h";
- #include "Vector.h";
+#include"ShaderProgram.h"
+#include "Vector.h"
+
 class GUI
 {
 public:

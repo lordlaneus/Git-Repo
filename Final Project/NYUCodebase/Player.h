@@ -8,11 +8,13 @@
 #include "Hook.h"
 #include "Weapon.h"
 #include "KeyStack.h"
+#include "Planet.h"
 
-class Game;
 class Hook;
 class Weapon;
-class Player: public Entity {
+class Game;
+class Planet;
+class Player: public Entity{
 public:
 	enum State{inAir,onGround,dying};
 	Hook* hook;
@@ -30,7 +32,7 @@ public:
 	Player();
 	Player(Game *g, Sprite);
 
-	bool collidesP(Planet p);
+	bool collidesP(Planet& p);
 	void collide(Entity& e);
 	void attack(Vector);
 	void die();
@@ -38,7 +40,7 @@ public:
 	void land(Planet& p);
 	void takeDamage(float dmg);
 	void walk();
-	void pop(Planet p);
+	void pop(Planet& p);
 	void render(ShaderProgram*);
 	void update(float elapsed);
 	void changeSprite();
