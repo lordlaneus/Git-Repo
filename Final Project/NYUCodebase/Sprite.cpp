@@ -1,4 +1,9 @@
 #include "Sprite.h"
+
+int Sprite::count()
+{
+	return sheetH*sheetW;
+}
 void Sprite::render(ShaderProgram* program, float x, float y, float width, float height, float rotation, int index, bool flipped)
 {
 	if (index == -1)
@@ -51,4 +56,11 @@ void Sprite::render(ShaderProgram* program, float x, float y, float width, float
 
 	glDisableVertexAttribArray(program->positionAttribute);
 	glDisableVertexAttribArray(program->texCoordAttribute);
+}
+
+Sprite Sprite::operator[](int index)
+{
+	Sprite s = *this;
+	s.index = index;
+	return s;
 }

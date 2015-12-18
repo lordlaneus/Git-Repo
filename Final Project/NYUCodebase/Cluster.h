@@ -25,6 +25,7 @@ public:
 
 	Planet* checkCollision(Vector);
 	int calculatePlanetType(float);
+	Planet* closestPlanet(Vector);
 	void update(float tick);
 	void render(ShaderProgram*);
 

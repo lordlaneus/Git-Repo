@@ -7,6 +7,7 @@
 #include "Bar.h"
 #include "DustEmitter.h"
 #include "Enemy.h"
+#include "Roller.h"
 
 
 using namespace std;
@@ -14,14 +15,13 @@ Game::Game()
 {
 	addSprite("logo", "resources\\logo.png", 0, 1, 1);
 	addSprite("fade", "resources\\fade.png", 0, 4, 4);
-	addSprite("cursor", "resources\\cursor.png", 0, 1, 1);
+	addSprite("gui", "resources\\gui.png", 0, 2, 2);
 	addSprite("bg", "resources\\background.png", 0, 1, 1);
-	addSprite("planet", "resources\\Planet Sheet.png", 0, 4, 2);
+	addSprite("planet", "resources\\Planets.png", 0, 4, 4);
 	addSprite("enemy", "resources\\Enemy Sheet.png", 0, 4, 2);
-	addSprite("player", "resources\\Player Sheet.png", 1, 4, 3);
+	addSprite("player", "resources\\Player Sheet.png", 1, 4, 4);
 	addSprite("particles", "resources\\Particles.png", 0, 2,2);
 	addSprite("bar", "resources\\bar.png", 0, 1, 4);
-	addSprite("compass", "resources\\compass.png", 0, 2, 1);
 	addSprite("msg", "resources\\messageBox.png", 0, 1, 1);
 	addSprite("font", "resources\\font.png", 16, 16, 16);
 	addSprite("attack", "resources\\attack.png", 0, 8, 1);
@@ -35,6 +35,7 @@ Game::Game()
 	addSound("enemyHurt", "resources\\enemy hurt.wav");
 	addSound("fire", "resources\\fire.wav");
 	addSound("explode", "resources\\explode.wav");
+	addSound("zap", "resources\\zap.wav");
 	addMusic("bgm", "resources\\bgm.wav");
 
 	mainMenu.title = "Main Menu";
@@ -94,12 +95,12 @@ Game::Game()
 	enemyCount = TextDisplay(sprites["font"], "Enemeis Left:", 3, 1, 120, 95);
 	gui.push_back(&enemyCount);
 
-	compass.sprite = sprites["compass"];
+	compass.sprite = sprites["gui"];
 	compass.position = Vector(80, 90);
 	compass.size = Vector(15, 15);
 	gui.push_back(&compass);
 
-	cursor.sprite = sprites["cursor"];
+	cursor.sprite = sprites["gui"][2];
 	cursor.size = Vector(4, 4);
 	gui.push_back(&cursor);
 
@@ -139,7 +140,7 @@ void Game::reset()
 	}
 	entities.clear();
 
-	for (int i = 0; i < spitters; i++)
+	for (int i = 0; i < enemySpitters; i++)
 	{
 		float dist = Util::randFloat()*(cluster->radius - 100) + 100;
 		float angle = Util::randFloat()*M_PI * 2;
@@ -148,7 +149,7 @@ void Game::reset()
 		position.normalize(dist);
 		entities.push_back(new Enemy(this, position));
 	}
-	for (int i = 0; i < chasers; i++)
+	for (int i = 0; i < enemyChasers; i++)
 	{
 		float dist = Util::randFloat()*(cluster->radius - 100) + 100;
 		float angle = Util::randFloat()*M_PI * 2;
@@ -167,6 +168,72 @@ void Game::reset()
 		e->sprite.index = 4;
 		entities.push_back(e);
 	}
+	for (int i = 0; i < enemyRollers; i++)
+	{
+		float dist = Util::randFloat()*(cluster->radius - 100) + 100;
+		float angle = Util::randFloat()*M_PI * 2;
+		Vector position(1, 1);
+		position.rotate(angle);
+		position.normalize(dist);
+		Roller* r = new Roller(this, position);
+		r->sprite.index = 3;
+		r->speed *= 5;
+		r->maxHealth = 20;
+		r->health = r->maxHealth;
+		entities.push_back(r);
+	}
+}
+void Game::start(ShaderProgram *program)
+{
+	renderBG(program);
+	float texture[] = {
+		0, 0,
+		1, 1,
+		0, 1,
+		1, 1,
+		0, 0,
+		1, 0 };
+	float vertices[] = {
+		5, -5,
+		-5, 5,
+		5, 5,
+		-5, 5,
+		5, -5,
+		-5, -5 };
+	Matrix model;
+	model.Translate(80, 50, 0);
+	model.Rotate(0.15);
+	model.Scale(3, 5, 1);
+	program->setModelMatrix(model);
+	program->setAlpha(1);
+	glUseProgram(program->programID);
+
+
+	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, vertices);
+	glEnableVertexAttribArray(program->positionAttribute);
+
+	glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, texture);
+	glEnableVertexAttribArray(program->texCoordAttribute);
+
+	glBindTexture(GL_TEXTURE_2D, sprites["logo"].texture);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(program->texCoordAttribute);
+	glDisableVertexAttribArray(program->positionAttribute);
+
+	Util::drawText(program, sprites["font"].texture, "Lord Laneus", 80, 80, 10, 2);
+	Util::drawText(program, sprites["font"].texture, "Presents:", 80, 20, 10, 2);
+
+	float m = startupTimer / 1.5;
+	int fade = m * 16;
+	if (fade <= 15)
+	{
+		renderFade(program, 15 - fade);
+	}
+
+
+
 }
 void Game::update(float elapsed)
 {
@@ -236,58 +303,6 @@ void Game::update(float elapsed)
 		victoryMenu.show();
 		state = Game::victory;
 	}
-
-
-}
-void Game::start(ShaderProgram *program)
-{
-	renderBG(program);
-	float texture[] = {
-		0, 0,
-		1, 1,
-		0, 1,
-		1, 1,
-		0, 0,
-		1, 0 };
-	float vertices[] = {
-		5, -5,
-		-5, 5,
-		5, 5,
-		-5, 5,
-		5, -5,
-		-5, -5 };
-	Matrix model;
-	model.Translate(80, 50, 0);
-	model.Rotate(0.15);
-	model.Scale(3, 5, 1);
-	program->setModelMatrix(model);
-	program->setAlpha(1);
-	glUseProgram(program->programID);
-
-
-	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, vertices);
-	glEnableVertexAttribArray(program->positionAttribute);
-
-	glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, texture);
-	glEnableVertexAttribArray(program->texCoordAttribute);
-
-	glBindTexture(GL_TEXTURE_2D, sprites["logo"].texture);
-
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glDisableVertexAttribArray(program->texCoordAttribute);
-	glDisableVertexAttribArray(program->positionAttribute);
-
-	Util::drawText(program, sprites["font"].texture, "Lord Laneus", 80, 80, 10, 2);
-	Util::drawText(program, sprites["font"].texture, "Presents:", 80, 20, 10, 2);
-
-	float m = startupTimer / 1.5;
-	int fade = m * 16;
-	if (fade <= 15)
-	{
-		renderFade(program, 15 - fade);
-	}
-
 
 
 }
@@ -406,13 +421,18 @@ void Game::render(ShaderProgram *program)
 		}
 	}
 }
-void Game::pause()
+void Game::addMusic(string name, const char* path)
 {
-	currentMenu = &pauseMenu;
-	pauseMenu.show();
-	playSound("boop");
-	state = paused;
+	music[name] = Mix_LoadMUS(path);
+}
+void Game::addSound(string name, const char* path)
+{
+	sounds[name] = Mix_LoadWAV(path);
+}
 
+void Game::addSprite(string name, const char* path, int i, int w, int h)
+{
+	sprites[name] = Sprite(Util::loadImage(path), i, w, h);
 }
 void Game::killAll()
 {
@@ -423,7 +443,7 @@ void Game::killAll()
 }
 void Game::loadCluster(string path)
 {
-	ifstream file("resources\\"+path);
+	ifstream file("resources\\" + path);
 	string line;
 	if (file.is_open())
 	{
@@ -436,10 +456,10 @@ void Game::loadCluster(string path)
 			{
 				if (line.substr(0, 2) == "P:")
 				{
-					cluster->planets.push_back(Planet(line.substr(3),cluster,cluster->sprite));
+					cluster->planets.push_back(Planet(line.substr(3), cluster, cluster->sprite));
 				}
 
-				else if(line.substr(0, 2) == "S:")
+				else if (line.substr(0, 2) == "S:")
 				{
 					Planet p(line.substr(3), cluster, cluster->sprite);
 					p.type = Planet::star;
@@ -454,7 +474,7 @@ void Game::loadCluster(string path)
 			state = play;
 		}
 	}
-		
+
 
 }
 void Game::menuSelect()//I hate this function, but I'm not sure else I should implement this
@@ -534,19 +554,26 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 	}
 	currentMenu->selected = 0;
 }
-void Game::addSprite(string name, const char* path, int i, int w, int h)
+void Game::pause()
 {
-	sprites[name] = Sprite(Util::loadImage(path), i, w, h);
+	currentMenu = &pauseMenu;
+	pauseMenu.show();
+	playSound("boop");
+	state = paused;
+
 }
-void Game::addSound(string name, const char* path)
+void Game::playMusic(string name)
 {
-	sounds[name] = Mix_LoadWAV(path);
+	Mix_PlayMusic(music[name], -1);
+}
+void Game::playSound(string name)
+{
+	Mix_PlayChannel(-1, sounds[name], 0);
 }
 
-void Game::addMusic(string name, const char* path)
-{
-	music[name] = Mix_LoadMUS(path);
-}
+
+
+
 void Game::showMsg(string msg, string subMsg1, string subMsg2, string subMsg3)
 {
 	msgBox.text = msg;
@@ -585,13 +612,4 @@ void Game::triggerDust(Vector position, Planet p, float speed)
 	dustEmitter.velocity.normalize(speed);
 
 	dustEmitter.trigger(&p);
-}
-
-void Game::playSound(string name)
-{
-	Mix_PlayChannel(-1, sounds[name], 0);
-}
-void Game::playMusic(string name)
-{
-	Mix_PlayMusic(music[name], -1);
 }

@@ -8,6 +8,10 @@
 class Enemy:public Entity
 {
 public:
+
+	const float avoidance = 20;
+	const float landBonus = M_PI / 2;
+	const float startHealth = 25;
 	enum State{aggro,returning, alert,circle};
 	
 	State state = alert;
@@ -15,10 +19,7 @@ public:
 	Vector home;
 	Vector baseSize;
 	int circleDir = 1;
-	float startHealth = 25;
 	float damage = 10;
-	float avoidance = 20;
-	float landBonus = M_PI;
 	float maxPuff = 1.5;
 	float puffStart = .07;
 	float fireRate = 2.5;
@@ -37,7 +38,7 @@ public:
 	void playerCollision(Player* p);
 
 	void takeDamage(float dmg);
-	void update(float);
+	virtual void update(float);
 	void render(ShaderProgram* program, int offset);
 
 	

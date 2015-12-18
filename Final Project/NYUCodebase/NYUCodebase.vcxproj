@@ -96,8 +96,8 @@
     <ClCompile Include="ParticleEmitter.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Projectile.cpp" />
+    <ClCompile Include="Roller.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
-    <ClCompile Include="Level.cpp" />
     <ClCompile Include="Cluster.cpp" />
     <ClCompile Include="Planet.cpp" />
     <ClCompile Include="Hook.cpp" />
@@ -118,7 +118,9 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="DustEmitter.h" />
+    <ClInclude Include="Header.h" />
     <ClInclude Include="Menu.h" />
+    <ClInclude Include="Roller.h" />
     <ClInclude Include="TextDisplay.h" />
     <ClInclude Include="Weapon.h" />
     <ClInclude Include="MsgBox.h" />

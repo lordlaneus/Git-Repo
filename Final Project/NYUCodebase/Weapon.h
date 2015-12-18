@@ -7,19 +7,24 @@
 class Weapon: public Entity
 {
 public:
-	Player* player;
-	float range = 12;
+	const float baseDamage = 10;
+	const float baseRange = 12;
+	const float chargeMult = 1;
+	const float maxLifetime = .5;
+	
 	bool active = false;
-	Vector dir;
 	Animation anim;
-	float damage = 10;
-	float maxLifetime = .5;
-	float lifetime = 0;
+	float charge;
+	float damage;
+	Vector dir;
+	float lifetime;
+	Player* player;
+	float range;
 
 	Weapon();
 	Weapon(Sprite s, Player* player);
 
-	void swing(Vector direction, Vector velocity);
+	void swing(Vector direction, Vector velocity,float charge);
 
 	void render(ShaderProgram*);
 	void update(float);

@@ -16,19 +16,19 @@ Player::Player(Game* g, Sprite sprite)
 	maxHealth = 100;
 	health = maxHealth;
 	hook = new Hook(this);
-	sword = new Weapon(g->sprites["attack"],this);
+	weapon = new Weapon(g->sprites["attack"],this);
 	hook->sprite = g->sprites["particles"];
 	this->sprite = sprite;
 	position.x = 0;
 	position.y = 15;
 	size = Vector(4, 7);
 
-	death.loop = false;
-	death.addFrame(2, 0.05);
-	death.addFrame(4, 0.05);
-	death.addFrame(5, 0.05);
-	death.addFrame(6, 0.05);
-	death.addFrame(7, 0.05);
+	deathAnim.loop = false;
+	deathAnim.addFrame(2, 0.05);
+	deathAnim.addFrame(4, 0.05);
+	deathAnim.addFrame(5, 0.05);
+	deathAnim.addFrame(6, 0.05);
+	deathAnim.addFrame(7, 0.05);
 
 	walkAnim.duration = 0.5;
 	walkAnim.addFrame(8, 1);
@@ -36,6 +36,12 @@ Player::Player(Game* g, Sprite sprite)
 	walkAnim.addFrame(10, 1);
 	walkAnim.addFrame(11, 1);
 
+	zipAnim.duration = 0.1;
+	zipAnim.loop = false;
+	zipAnim.addFrame(12, 1);
+	zipAnim.addFrame(13, 1);
+	zipAnim.addFrame(14, 1);
+	zipAnim.addFrame(15, 1);
 }
 bool Player::collidesP(Planet& p)
 {
@@ -47,10 +53,16 @@ bool Player::collidesP(Planet& p)
 }
 void Player::attack(Vector dir)
 {
-	if (!sword->active)
+	charging = false;
+	if (!weapon->active)
 	{
-		sword->swing(dir,velocity);
+		weapon->swing(dir,velocity,chargeTime);
 	}
+}
+void Player::charge()
+{
+	charging = true;
+	chargeTime = 1;
 }
 void Player::die()
 {
@@ -61,12 +73,21 @@ void Player::die()
 	}
 	dying = true;
 }
+bool Player::drainEnergy(float amount)
+{
+	if (amount < energy)
+	{
+		energy -= amount;
+		return true;
+	}
+	return g->exploring;
+}
 
 void Player::jump()
 {
-	if (state==onGround)
+	if (onGround)
 	{
-		state = inAir;
+		onGround = false;
 		Vector jumpVector = position - planet->position;
 		jumpVector.normalize(jumpPower);
 		velocity = velocity + jumpVector;
@@ -82,7 +103,7 @@ void Player::land(Planet &p)
 	{
 		g->playSound("land");
 		hook->state = Hook::away;
-		state = onGround;
+		onGround = true;
 
 		planet = &p;
 		walk();
@@ -94,7 +115,7 @@ void Player::land(Planet &p)
 		g->triggerParticles(g->fireEmitter,position, p,20);
 		planet = &p;
 		hook->state = Hook::away;
-		state = onGround;
+		onGround = true;
 		accel.clear();
 		velocity.clear();
 		jump();
@@ -106,7 +127,7 @@ void Player::shift()
 {
 	shifted = true;
 	shiftDown = true;
-	state = inAir;
+	onGround = false;
 	shiftingTime = 0.25;
 }
 void Player::takeDamage(float dmg)
@@ -174,19 +195,31 @@ void Player::pop(Planet& p)
 }
 
 
+void Player::zip()
+{
+	if (onGround && zipTime <= 0 && drainEnergy(zipCost))
+	{
+		zDown=false;
+		g->playSound("zap");
+		zipTime = zipLength;
+		zipPosition = position;
+		sprite.flipped = !sprite.flipped;
+	}
+}
+
 void Player::update(float elapsed)
 {
 
-	if (sword->active)
+	if (weapon->active)
 	{
 		for (int i = 0; i < g->entities.size(); i++)
 		{
 			Entity*e = g->entities[i];
-			if (sword->collides(*e))
+			if (weapon->collides(*e))
 			{
 				if (e->type == Entity::enemy)
 				{
-					dynamic_cast<Enemy*>(e)->takeDamage(sword->damage);
+					dynamic_cast<Enemy*>(e)->takeDamage(weapon->damage);
 				}
 				else if (e->type == Entity::projectile)
 				{
@@ -196,10 +229,9 @@ void Player::update(float elapsed)
 		}
 	}
 	bool splinch = false;
-	if (shifted )
+	if (shifted)
 	{
-		energy -= shiftCost * elapsed;
-		if (energy <= 0 && !g->exploring)
+		if (!drainEnergy(shiftCost*elapsed))
 		{
 			shifted = false;
 			splinch = true;
@@ -222,15 +254,23 @@ void Player::update(float elapsed)
 		}
 		
 	}
+	if (charging)
+	{
+		if (drainEnergy(chargeCost*elapsed))
+		{
+		chargeTime += elapsed;
+		}
+	}
+	if (!shifted&&!charging&&energy < maxEnergy)
+	{
+
+		energy += energyRegen* elapsed;
+	}
 	if (shiftingTime > 0)
 	{
 		shiftingTime -= elapsed;
 	}
-	else if(energy < maxEnergy)
-	{
-		
-		energy += energyRegen* elapsed;
-	}
+	
 	if (hurt > 0)
 	{
 	hurt -= elapsed;
@@ -272,8 +312,12 @@ void Player::update(float elapsed)
 
 		}
 	}
-	else if (state==onGround)
+	else if (onGround)
 	{
+		if (zDown)
+		{
+			zip();
+		}
 		velocity.clear();
 		pop(*planet);
 		planet->on = true;
@@ -282,7 +326,7 @@ void Player::update(float elapsed)
 		position = planet->position + newPos;
 		rotation = (planet->position - position).angle() + M_PI / 2;
 	}
-	else if (state==inAir)
+	else
 	{
 		accel = totalPull * !shifted;
 		rotation = (majorPuller.position - position).angle() + M_PI / 2;
@@ -307,15 +351,21 @@ void Player::update(float elapsed)
 			}
 		}
 	}
+	if (zipTime > 0)
+	{
+		zipTime -= elapsed;
+		Vector dest = planet->position - zipPosition;
+		position = zipPosition + (dest *((zipLength - zipTime) / zipLength) * 2);
+	}
 	hook->update(elapsed);
-	sword->update(elapsed);
+	weapon->update(elapsed);
 	changeSprite();
 }
 void Player::changeSprite()
 {
 	if (dying)
 	{
-		sprite.index = death.getFrame((deathTime - hurt) / deathTime);
+		sprite.index = deathAnim.getFrame((deathTime - hurt) / deathTime);
 	}
 	else if (hurt > 0)
 	{
@@ -328,9 +378,13 @@ void Player::changeSprite()
 			sprite.index = 3;
 		}
 	}
-	else if (state==inAir)
+	else if (!onGround)
 	{
 		sprite.index = 1;
+	}
+	else if (zipTime > 0)
+	{
+		sprite.index = zipAnim.getFrame(1 - zipTime / zipLength);
 	}
 	else if (walking < 0)
 	{
@@ -358,16 +412,16 @@ void Player::render(ShaderProgram* program)
 	}
 	Entity::render(program);
 	hook->render(program);
-	if (sword->active)
+	if (weapon->active)
 	{
-		sword->render(program);
+		weapon->render(program);
 	}
 	program->setInvert(false);
 	if (shiftingTime > 0)
 	{
 
 		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-		g->sprites["particles"].render(program, position.x, position.y, 10 - shiftingTime * 40, 10 - shiftingTime * 40, 0, 1, false);
+		g->sprites["gui"][3].render(program, position.x, position.y, 10 - shiftingTime * 40, 10 - shiftingTime * 40);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}

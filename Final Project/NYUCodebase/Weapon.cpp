@@ -8,6 +8,7 @@ Weapon::Weapon(Sprite sprite, Player* player)
 {
 	this->sprite = sprite;
 	this->player = player;
+	this->charge = charge;
 	size = Vector(3, 8);
 	anim.addFrame(0, 0.05);
 	anim.addFrame(1, 0.05);
@@ -19,10 +20,14 @@ Weapon::Weapon(Sprite sprite, Player* player)
 	anim.addFrame(7, 0.05);
 }
 
-void Weapon::swing(Vector dir, Vector velocity)
+void Weapon::swing(Vector dir, Vector velocity, float charge)
 {
 	this->dir = dir;
 	this->velocity = velocity;
+	this->charge = charge;
+	size = Vector(3, 8) * charge*chargeMult;
+	range = baseRange * charge * chargeMult;
+	damage = baseDamage * charge *chargeMult;
 	position = player->position;
 	rotation = dir.angle();
 	active = true;
@@ -44,7 +49,7 @@ void Weapon::render(ShaderProgram* program)
 		u + spriteWidth, v + spriteHeight
 	};
 	float vertices[] = { -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f };
-	// our regular sprite drawing
+
 	Matrix modelMatrix;
 	modelMatrix.Translate(position.x, position.y, 0);
 	modelMatrix.Rotate(rotation);

@@ -1,11 +1,14 @@
 
 #pragma once
 
-#include "Vector.h"
 #include <vector>
+
+
+
 #include "Particle.h"
 #include "Sprite.h"
 #include "ShaderProgram.h"
+#include "Vector.h"
 
 class ParticleEmitter {
 public:

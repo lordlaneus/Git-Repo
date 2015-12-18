@@ -21,6 +21,7 @@ public:
 		sheetH = h;
 		sheetW = w;
 	}
+	int count();
 	void set(GLuint t, int i, int w, int h)
 	{
 		texture = t;
@@ -29,4 +30,6 @@ public:
 		sheetW = w;
 	}
 	void render(ShaderProgram*, float, float, float, float, float = 0, int = -1, bool = false);
+
+	Sprite operator[](int);
 };

@@ -164,10 +164,14 @@ int main(int argc, char *argv[])
 						}
 						else
 						{
-							g.player->attack(g.cursor.position);
+							g.player->charge();
 						}
 					}
-					if (event.type == SDL_KEYDOWN&& event.key.repeat == 0)
+					else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
+					{
+						g.player->attack(g.cursor.position);
+					}
+					else if (event.type == SDL_KEYDOWN&& event.key.repeat == 0)
 					{
 						switch (event.key.keysym.sym)
 						{
@@ -179,7 +183,13 @@ int main(int argc, char *argv[])
 							g.player->walk();
 							break;
 						case SDLK_e:
-							g.player->hook->shoot(g.cursor.position, 400,30,2);
+							if (g.player->drainEnergy(g.player->heavyGrappleCost))
+							{
+								g.player->hook->shoot(g.cursor.position, 400, 30, 2);
+							}
+							break;
+						case SDLK_z:
+							g.player->zDown = true;
 							break;
 						case SDLK_LSHIFT:
 							g.player->shift();
@@ -201,6 +211,8 @@ int main(int argc, char *argv[])
 						case SDLK_SPACE:
 							g.player->jump();
 							break;
+						case SDLK_z:
+							g.player->zDown = false;
 						case SDLK_LSHIFT:
 							g.player->shiftDown = false;
 							break;

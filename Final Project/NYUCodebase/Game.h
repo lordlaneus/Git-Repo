@@ -29,60 +29,61 @@ class Entity;
 class Player;
 class Game {
 public:
-	int startupLength = .5;
-	float startupTimer = 0;
-	int spitters = 10;
-	int chasers = 25;
-	bool exploring = false;
-	float lastFrameTime;
+	const int enemyChasers = 25;
+	const int enemyRollers = 15;
+	const int enemySpitters = 10;
+	const float startupLength = 3;
+
 	enum State { ready, startup, title, play, paused, message, victory, gameOver, done, };
 
-	State state = title;
 	Cluster* cluster;
-	Player* player;
-	std::map<std::string, Sprite> sprites;
-	std::map < std::string, Mix_Chunk*> sounds;
-	std::map < std::string, Mix_Music*> music;
-	Cursor cursor;
 	Menu* currentMenu;
-	Menu mainMenu;
-	Menu gameOverMenu;
-	Menu victoryMenu;
-	Menu pauseMenu;
-	Bar health;
-	Bar energy;
+	Cursor cursor;
 	Compass compass;
-	MsgBox msgBox;
-	TextDisplay enemyCount;
-	std::vector<GUI*> indicators;
-	std::vector<GUI*> gui;
-	std::vector<Entity*> entities;
 	DustEmitter dustEmitter;
+	TextDisplay enemyCount;
+	Bar energy;
+	std::vector<Entity*> entities;
+	bool exploring = false;
 	ParticleEmitter fireEmitter;
-
+	Menu gameOverMenu;
+	std::vector<GUI*> gui;
+	Bar health;
+	std::vector<GUI*> indicators;
+	float lastFrameTime;
+	Menu mainMenu;
+	MsgBox msgBox;
+	std::map < std::string, Mix_Music*> music;
+	Menu pauseMenu;
+	Player* player;
+	std::map < std::string, Mix_Chunk*> sounds;
+	std::map<std::string, Sprite> sprites;
+	float startupTimer = 0;
+	State state = title;
+	Menu victoryMenu;
 
 	Game();
 
-	void addSprite(std::string, const char*, int, int, int);
-	void addSound(std::string, const char*);
 	void addMusic(std::string, const char*);
-
-
-	void start(ShaderProgram*);
-	void reset();
-	void update(float elapsed);
-	void renderFade(ShaderProgram*, int);
-	void renderBG(ShaderProgram*);
-	void renderGui(ShaderProgram*);
-	void render(ShaderProgram*);
-	void pause();
+	void addSound(std::string, const char*);
+	void addSprite(std::string, const char*, int, int, int);
+	
 	void killAll();
 	void loadCluster(std::string path);
 	void menuSelect();
+	void pause();
+	void playMusic(std::string);
+	void playSound(std::string);
+	void reset();
 	void showMsg(std::string msg, std::string subMsg1 = "", std::string subMsg2 = "", std::string subMsg3 = "");
+	void start(ShaderProgram*);
 	void triggerDust(Vector position, Planet p,float speed);
 	void triggerFire(Vector position);
 	void triggerParticles(ParticleEmitter& pe, Vector position, Planet p,float speed =5);
-	void playSound(std::string);
-	void playMusic(std::string);
+
+	void update(float elapsed);
+	void renderBG(ShaderProgram*);
+	void renderFade(ShaderProgram*, int);
+	void renderGui(ShaderProgram*);
+	void render(ShaderProgram*);
 };

@@ -27,7 +27,7 @@ Cluster::Cluster(Game* g, int size, Sprite s)
 		if (Util::randFloat() < .2)
 		{
 			p.type = Planet::star;
-			p.sprite.index = 7;
+			p.sprite.index = p.sprite.count() - 1;
 		}
 		p.position = Vector(1, 1);
 		do
@@ -62,9 +62,25 @@ Planet* Cluster::checkCollision(Vector v)
 }
 int Cluster::calculatePlanetType(float dist)
 {
-	float type = 6 * dist / radius;
-	type += Util::randFloat();
+	float type = 14 * dist / radius;
+	type += Util::randFloat() * 2;
 	return type;
+}
+
+Planet* Cluster::closestPlanet(Vector position)
+{
+	Planet* p = &planets[0];
+	float minDistance = position.distance(planets[0].position);
+	for (int i = 1; i < planets.size(); i++)
+	{
+		float distance = position.distance(planets[i].position);
+		if (p->type==Planet::star || planets[i].type==Planet::moon && distance  < minDistance)
+		{
+			p = &planets[i];
+			minDistance = distance;
+		}
+	}
+	return p;
 }
 void Cluster::render(ShaderProgram *program)
 {
