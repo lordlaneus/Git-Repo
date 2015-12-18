@@ -1,4 +1,4 @@
-
+uniform bool invert;
 uniform sampler2D diffuse;
 
 varying vec2 texCoordVar;
@@ -9,11 +9,14 @@ float attenuate(float dist) {
 	}
 
 void main() {
-
 	vec3 brightness = vec3(1, 1, 1);
 	brightness *= attenuate(distance(vec2(80,50), varPosition));
 	
 	vec4 color = texture2D(diffuse, texCoordVar);
+	if (invert)
+	{
+		color.xyz = 1-color.xyz;
+	}
 	gl_FragColor.xyz =color.xyz * brightness;
     gl_FragColor.a = color.a;
 }

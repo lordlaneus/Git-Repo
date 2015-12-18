@@ -1,5 +1,6 @@
 #include "Enemy.h"
 
+#include "sstream"
 #include "Bar.h"
 #include "Planet.h"
 #include "Util.h"
@@ -7,6 +8,23 @@ using namespace std;
 
 Enemy::Enemy()
 {
+
+}
+Enemy::Enemy(string line, Game* g)
+{
+	this->g = g;
+	type = enemy;
+	maxPuff = 1;
+	size = Vector(5, 5);
+	baseSize = size;
+	maxHealth = 1;
+	bar = new Bar;
+	sprite = g->sprites["enemy"];
+	istringstream iss(line);
+	iss>> position.x;
+	iss >> position.y;
+	iss >> speed;
+	iss >> fireRate;
 
 }
 Enemy::Enemy(Game* g, Vector position) :
@@ -21,7 +39,7 @@ Entity(g)
 	home = position;
 	float coolDown = fireRate + Util::randFloat();
 	sprite = g->sprites["enemy"];
-	bar = new Bar(g->sprites["gui"], maxHealth, 4, 1);
+	bar = new Bar(g->sprites["bar"], maxHealth, 4, 1);
 	bar->e = this;
 	bar->fixed = false;
 	bar->visible = false;
@@ -32,16 +50,19 @@ Entity(g)
 void Enemy::die()
 {
 	this->active = false;
-	g->triggerParticles(g->fireEmitter, position);
+	g->triggerFire(position);
 	g->playSound("explode");
 }
 void Enemy::fire()
 {
-	Projectile* p = new Projectile(g, position);
+	Projectile* p = new Projectile(g, position, damage);
 	p->velocity = (g->player->position - position).normalize(projectileSpeed);
 	g->entities.push_back(p);
 	g->playSound("fire");
+	if (fireRate > 0)
+	{
 	coolDown = fireRate + Util::randFloat();
+	}
 }
 void Enemy::playerCollision(Player* p)
 {
@@ -69,7 +90,7 @@ void Enemy::update(float elapsed)
 	Entity::update(elapsed);
 	if (state == aggro)
 	{
-		coolDown -= elapsed;
+			coolDown -= elapsed;
 		float m = coolDown / fireRate;
 		float puff = m*(1 - maxPuff) / puffStart + maxPuff;
 		if (puff < 1)
@@ -78,7 +99,7 @@ void Enemy::update(float elapsed)
 		}
 		size = baseSize*puff;
 
-		if (coolDown < 0)
+		if (coolDown < 0 && fireRate>0)
 		{
 			fire();
 		}
@@ -97,7 +118,6 @@ void Enemy::update(float elapsed)
 	}
 	else if (state == circle)
 	{
-		coolDown -= elapsed;
 		float m = coolDown / fireRate;
 		float puff = m*(1 - maxPuff) / puffStart + maxPuff;
 		if (puff < 1)
@@ -106,7 +126,7 @@ void Enemy::update(float elapsed)
 		}
 		size = baseSize*puff;
 
-		if (coolDown < 0)
+		if (coolDown < 0 && fireRate>0)
 		{
 			fire();
 		}
@@ -179,29 +199,30 @@ void Enemy::update(float elapsed)
 		}
 	}
 }
-void Enemy::render(ShaderProgram* program)
+void Enemy::render(ShaderProgram* program, int offset)
 {
 	if (hurt > 0)
 	{
 		if (state==aggro || state == circle)
 		{
-			sprite.index = 3;
+
+			Entity::render(program, -6);
 		}
 		else
 		{
-			sprite.index = 2; 
+			Entity::render(program, -7);
 		}
 	}
 	else
 	{
 		if (state == aggro || state == circle)
 		{
-			sprite.index = 1;
+			Entity::render(program,1);
 		}
 		else
 		{
-			sprite.index = 0;
+			Entity::render(program);
 		}
 	}
-	Entity::render(program);
+	
 }

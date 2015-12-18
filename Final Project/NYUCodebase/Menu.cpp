@@ -40,7 +40,7 @@ void Menu::render(ShaderProgram* program)
 	float optionsStart = position.y - fontSize * 2;
 	if (showTitle)
 	{
-		Util::drawText(program, font.texture, title, position.x, position.y - fontSize * 2, fontSize, fontSpacing);
+		Util::drawText(program, font.texture, title, position.x, position.y - fontSize * 2, fontSize*1.2, fontSpacing);
 		optionsStart = position.y - fontSize * 5;
 	}
 

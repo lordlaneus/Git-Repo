@@ -31,7 +31,8 @@ class Game {
 public:
 	int startupLength = .5;
 	float startupTimer = 0;
-	int totalEnemies = 10;
+	int spitters = 10;
+	int chasers = 25;
 	bool exploring = false;
 	float lastFrameTime;
 	enum State { ready, startup, title, play, paused, message, victory, gameOver, done, };
@@ -49,6 +50,7 @@ public:
 	Menu victoryMenu;
 	Menu pauseMenu;
 	Bar health;
+	Bar energy;
 	Compass compass;
 	MsgBox msgBox;
 	TextDisplay enemyCount;
@@ -69,17 +71,17 @@ public:
 	void start(ShaderProgram*);
 	void reset();
 	void update(float elapsed);
-	std::vector<Planet> findLights(Vector);
 	void renderFade(ShaderProgram*, int);
 	void renderBG(ShaderProgram*);
 	void renderGui(ShaderProgram*);
 	void render(ShaderProgram*);
 	void pause();
 	void killAll();
+	void loadCluster(std::string path);
 	void menuSelect();
 	void showMsg(std::string msg, std::string subMsg1 = "", std::string subMsg2 = "", std::string subMsg3 = "");
 	void triggerDust(Vector position, Planet p,float speed);
-	void triggerParticles(ParticleEmitter& pe, Vector position);
+	void triggerFire(Vector position);
 	void triggerParticles(ParticleEmitter& pe, Vector position, Planet p,float speed =5);
 	void playSound(std::string);
 	void playMusic(std::string);

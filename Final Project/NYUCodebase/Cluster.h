@@ -19,6 +19,7 @@ public:
 	std::vector<Planet> planets;
 
 	Cluster();
+	Cluster(Game*, Sprite);
 	Cluster(Game* g, int, Sprite);
 
 

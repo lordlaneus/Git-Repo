@@ -1,7 +1,10 @@
 #include "Sprite.h"
-void Sprite::render(ShaderProgram* program, float x, float y, float width, float height, float rotation, bool flipped)
+void Sprite::render(ShaderProgram* program, float x, float y, float width, float height, float rotation, int index, bool flipped)
 {
-
+	if (index == -1)
+	{
+		index = this->index;
+	}
 	float u = (float)(((int)index) % sheetW) / (float)sheetW;
 	float v = (float)(((int)index) / sheetW) / (float)sheetH;
 	float spriteWidth = 1.0 / (float)sheetW;

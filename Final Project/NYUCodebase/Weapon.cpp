@@ -1,5 +1,4 @@
 #include "Weapon.h"
-#define TAU 1.57079
 using namespace std;
 Weapon::Weapon()
 {
@@ -20,9 +19,10 @@ Weapon::Weapon(Sprite sprite, Player* player)
 	anim.addFrame(7, 0.05);
 }
 
-void Weapon::swing(Vector d)
+void Weapon::swing(Vector dir, Vector velocity)
 {
-	dir = (d- player->position);
+	this->dir = dir;
+	this->velocity = velocity;
 	position = player->position;
 	rotation = dir.angle();
 	active = true;
@@ -84,8 +84,7 @@ void Weapon::update(float elapsed)
 	if (active)
 	{
 		lifetime += elapsed;
-		//position = player->position + dir.normalize(lifetime/maxLifetime*range);
-		position = position + dir.normalize(range/maxLifetime)*elapsed;
+		position = position + dir.normalize(range / maxLifetime)*elapsed + velocity*elapsed;
 		float m = lifetime / maxLifetime;
 		sprite.index = anim.getFrame(m);
 		if (lifetime > maxLifetime)

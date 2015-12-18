@@ -1,0 +1,12 @@
+
+uniform sampler2D diffuse;
+uniform float alpha;
+
+
+varying vec2 texCoordVar;
+
+void main() {
+	vec4 finalColor = texture2D(diffuse, texCoordVar);
+	finalColor.a *=alpha;
+    gl_FragColor = finalColor;
+}

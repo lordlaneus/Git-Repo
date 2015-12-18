@@ -73,12 +73,14 @@ int main(int argc, char *argv[])
 	program->setModelMatrix(modelMatrix);
 	program->setProjectionMatrix(projectionMatrix);
 	program->setViewMatrix(viewMatrix);
+	program->setInvert(false);
 
 
 	guiProgram->setModelMatrix(modelMatrix);
 	guiProgram->setProjectionMatrix(projectionMatrix);
 	guiProgram->setViewMatrix(viewMatrix);
 	guiProgram->setAlpha(1);
+
 
 
 
@@ -110,7 +112,7 @@ int main(int argc, char *argv[])
 			{
 				float unitX = (((float)event.motion.x / 1280) * 160);
 				float unitY = (((float)(720 - event.motion.y) / 720) * 100);
-				g.cursor.position = Vector(unitX, unitY);
+				g.cursor.position = Vector(unitX-80, unitY-50);
 			}
 			else if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_TAB)
 			{
@@ -156,17 +158,13 @@ int main(int argc, char *argv[])
 					break;
 				case Game::play:
 					if (event.type == SDL_MOUSEBUTTONDOWN) {
-						float unitX = (((float)event.button.x / 1280) * 160);
-						float unitY = (((float)(720 - event.button.y) / 720) * 100);
-						unitX += g.player->position.x - 80;
-						unitY += g.player->position.y - 50;
 						if (event.button.button == SDL_BUTTON_RIGHT)
 						{
-							g.player->hook->shoot(unitX, unitY);
+							g.player->hook->shoot(g.cursor.position, 100,50);
 						}
 						else
 						{
-							g.player->attack(Vector(unitX, unitY));
+							g.player->attack(g.cursor.position);
 						}
 					}
 					if (event.type == SDL_KEYDOWN&& event.key.repeat == 0)
@@ -180,6 +178,13 @@ int main(int argc, char *argv[])
 							g.player->wasd.add(event.key.keysym.sym);
 							g.player->walk();
 							break;
+						case SDLK_e:
+							g.player->hook->shoot(g.cursor.position, 400,30,2);
+							break;
+						case SDLK_LSHIFT:
+							g.player->shift();
+							break;
+	
 						}
 					}
 					if (event.type == SDL_KEYUP)
@@ -195,6 +200,9 @@ int main(int argc, char *argv[])
 							break;
 						case SDLK_SPACE:
 							g.player->jump();
+							break;
+						case SDLK_LSHIFT:
+							g.player->shiftDown = false;
 							break;
 						case SDLK_ESCAPE:
 							g.pause();

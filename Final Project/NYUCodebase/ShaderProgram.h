@@ -18,6 +18,7 @@ class ShaderProgram {
         ~ShaderProgram();
 
 
+		void setInvert(bool);
 		void setLights(Vector position,Vector color);
 		void setAlpha(float);
         void setModelMatrix(const Matrix &matrix);
@@ -33,6 +34,7 @@ class ShaderProgram {
 		GLuint lightColorUniform;
 
 		GLuint alphaUniform;
+		GLuint invertUniform;
         GLuint projectionMatrixUniform;
         GLuint modelMatrixUniform;
         GLuint viewMatrixUniform;

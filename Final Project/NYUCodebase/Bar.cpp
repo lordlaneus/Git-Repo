@@ -26,10 +26,10 @@ void Bar::render(ShaderProgram *program)
 	//draw back;
 	texCoords.insert(texCoords.end(),{
 		0, 0,
-		1, 0.5,
-		0, 0.5,
+		1, 0.25,
+		0, 0.25,
 
-		1, 0.5,
+		1, 0.25,
 		0, 0,
 		1, 0
 	});
@@ -44,18 +44,20 @@ void Bar::render(ShaderProgram *program)
 
 	//draw front
 	float perc = current / max;
+	float top = color*0.25;
+	float btm = top + 0.25;
 	if (perc < 0)
 	{
 		perc = 0;
 	}
 	texCoords.insert(texCoords.end(), {
-		0, 0.5,
-		perc, 1,
-		0, 1,
+		0, btm,
+		perc, top,
+		0, top,
 
-		perc, 1,
-		0, 0.5,
-		perc, 0.5
+		perc, top,
+		0, btm,
+		perc, btm
 	});
 	vertices.insert(vertices.end(), {
 		0, 0,

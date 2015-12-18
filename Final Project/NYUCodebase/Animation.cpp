@@ -1,4 +1,5 @@
 #include "Animation.h"
+#include <SDL.h>
 
 using namespace std;
 
@@ -9,9 +10,13 @@ void Animation::addFrame(int frame, float length)
 }
 int Animation::getFrame(float time)
 {
+	if (time == -1)
+	{
+		time = (float)SDL_GetTicks() / 1000;
+	}
 	if (loop)
 	{
-		time = fmod(time, 1);
+		time = fmod(time/duration, 1);
 	}
 	time *= length();
 	for (int i = 0;i < timing.size(); i++)

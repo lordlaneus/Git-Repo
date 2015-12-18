@@ -22,7 +22,8 @@ public:
 	Cluster* cluster;
 
 	Planet();
-	Planet(Cluster*,Sprite, float=0, float=0, float=1, float=1);
+	Planet(std::string line, Cluster* cluster, Sprite sprite);
+	Planet(Cluster*,Sprite, float=0, float=0, float=1, float=2);
 	
 	float mass();
 	Vector getColor();

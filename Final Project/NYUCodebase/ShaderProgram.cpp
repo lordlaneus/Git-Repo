@@ -24,6 +24,7 @@ ShaderProgram::ShaderProgram(const char *vertexShaderFile, const char *fragmentS
 	lightPositionUniform = glGetUniformLocation(programID, "lightPositions");
 	lightColorUniform = glGetUniformLocation(programID, "lightColors");
 
+	invertUniform = glGetUniformLocation(programID, "invert");
 	alphaUniform = glGetUniformLocation(programID, "alpha");
     modelMatrixUniform = glGetUniformLocation(programID, "modelMatrix");
     projectionMatrixUniform = glGetUniformLocation(programID, "projectionMatrix");
@@ -90,6 +91,11 @@ void ShaderProgram::setLights(Vector position, Vector color)
 {
 	glUniform2f(lightPositionUniform, position.x,position.y);
 	glUniform3f(lightColorUniform, color.x, color.y, color.z);
+}
+void ShaderProgram::setInvert(bool invert)
+{
+	glUseProgram(programID);
+	glUniform1f(invertUniform, invert);
 }
 void ShaderProgram::setAlpha(float alpha)
 {

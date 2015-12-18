@@ -28,5 +28,5 @@ public:
 		sheetH = h;
 		sheetW = w;
 	}
-	void render(ShaderProgram*, float, float, float, float, float = 0, bool =false);
+	void render(ShaderProgram*, float, float, float, float, float = 0, int = -1, bool = false);
 };

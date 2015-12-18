@@ -8,12 +8,15 @@ Hook::Hook(Player* p)
 	size = 1;
 	state = away;
 }
-void Hook::shoot(float x, float y)
+void Hook::shoot(Vector target,float strength, float length, float size)
 {
-	Vector target(x, y);
-	position = player->position;
-	velocity = target - player->position;
+	
+	velocity = target;
 	velocity.normalize(castSpeed);
+	this->strength = strength;
+	maxLength = length;
+	this->size = size;
+	position = player->position;
 	state = cast;
 }
 void Hook::update(float elapsed)
@@ -44,7 +47,7 @@ void Hook::update(float elapsed)
 	else if (state == reeling)
 	{
 		Vector pull = position - player->position;
-		pull.normalize(castSpeed);
+		pull.normalize(strength);
 		player->velocity = player->velocity + pull * elapsed;
 	}
 
@@ -56,8 +59,8 @@ void Hook::render(ShaderProgram* program)
 		return;
 	}
 	renderChain(program);
-	float u = (float)(((int)sprite.index) % sprite.sheetW) / (float)sprite.sheetW;
-	float v = (float)(((int)sprite.index) / sprite.sheetW) / (float)sprite.sheetH;
+	float u = (float)(((int)2) % sprite.sheetW) / (float)sprite.sheetW;
+	float v = (float)(((int)2) / sprite.sheetW) / (float)sprite.sheetH;
 	float spriteWidth = 1.0 / (float)sprite.sheetW;
 	float spriteHeight = 1.0 / (float)sprite.sheetH;
 	GLfloat texCoords[] = {
@@ -69,10 +72,9 @@ void Hook::render(ShaderProgram* program)
 		u + spriteWidth, v + spriteHeight
 	};
 	float vertices[] = { -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f };
-	// our regular sprite drawing
 	Matrix modelMatrix;
 	modelMatrix.Translate(position.x, position.y, 0);
-	modelMatrix.Scale(size, size, 1);
+	modelMatrix.Scale(size*2, size*2, 1);
 	program->setModelMatrix(modelMatrix);
 
 	//drawing
@@ -116,11 +118,11 @@ void Hook::renderChain(ShaderProgram* program)
 			x + size, y - size
 		});
 		texCoords.insert(texCoords.end(), {
-			0.5f, 0.0f,
+			0.5f, 0.5f,
 			0.5f, 1.0f,
-			1.0f, 0.0f,
+			1.0f, 0.5f,
 
-			1.0f, 0.0f,
+			1.0f, 0.5f,
 			0.5f, 1.0f,
 			1.0f, 1.0f
 

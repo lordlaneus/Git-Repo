@@ -35,7 +35,7 @@ void Util::drawText(ShaderProgram* program, int fontTexture, std::string text, f
 
 	if (centered)
 	{
-		modelMatrix.Translate(x - (size* (text.length() + 1) / 2), y, 0);
+		modelMatrix.Translate(x - (size* (text.length() ) / 2), y, 0);
 	}
 	else
 	{

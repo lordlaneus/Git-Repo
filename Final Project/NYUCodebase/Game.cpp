@@ -1,8 +1,14 @@
+
+#include <fstream>
+#include <iostream>
+
 #include "Game.h"
 #include "Util.h"
 #include "Bar.h"
 #include "DustEmitter.h"
 #include "Enemy.h"
+
+
 using namespace std;
 Game::Game()
 {
@@ -11,15 +17,15 @@ Game::Game()
 	addSprite("cursor", "resources\\cursor.png", 0, 1, 1);
 	addSprite("bg", "resources\\background.png", 0, 1, 1);
 	addSprite("planet", "resources\\Planet Sheet.png", 0, 4, 2);
-	addSprite("enemy", "resources\\Enemy Sheet.png", 0, 4, 1);
-	addSprite("player", "resources\\Player Sheet.png", 1, 5, 2);
-	addSprite("particles", "resources\\Particles.png", 0, 1, 1);
-	addSprite("hook", "resources\\Hook Sheet.png", 0, 2, 1);
-	addSprite("gui", "resources\\gui.png", 0, 1, 2);
+	addSprite("enemy", "resources\\Enemy Sheet.png", 0, 4, 2);
+	addSprite("player", "resources\\Player Sheet.png", 1, 4, 3);
+	addSprite("particles", "resources\\Particles.png", 0, 2,2);
+	addSprite("bar", "resources\\bar.png", 0, 1, 4);
 	addSprite("compass", "resources\\compass.png", 0, 2, 1);
 	addSprite("msg", "resources\\messageBox.png", 0, 1, 1);
 	addSprite("font", "resources\\font.png", 16, 16, 16);
 	addSprite("attack", "resources\\attack.png", 0, 8, 1);
+	addSprite("tutorial", "resources\\tutorial.png", 0, 4, 3);
 
 	addSound("startup", "resources\\startup.wav");
 	addSound("boop", "resources\\boop.wav");
@@ -32,7 +38,7 @@ Game::Game()
 	addMusic("bgm", "resources\\bgm.wav");
 
 	mainMenu.title = "Main Menu";
-	mainMenu.position = Vector(80, 60);
+	mainMenu.position = Vector(80, 70);
 	mainMenu.size = Vector(80, 80);
 	mainMenu.margin = 30;
 	mainMenu.fontSize = 6;
@@ -43,6 +49,7 @@ Game::Game()
 	mainMenu.showTitle = false;
 	mainMenu.addOption("Play");
 	mainMenu.addOption("Roam");
+	mainMenu.addOption("Help");
 	mainMenu.addOption("Quit");
 
 
@@ -62,7 +69,7 @@ Game::Game()
 	victoryMenu.title = "Victory!";
 	victoryMenu.margin = 15;
 	victoryMenu.addOption("Restart");
-	victoryMenu.addOption("Expolore");
+	victoryMenu.addOption("Explore");
 	gui.push_back(&victoryMenu);
 
 	pauseMenu.title = "Paused";
@@ -70,9 +77,14 @@ Game::Game()
 	pauseMenu.addOption("Quit");
 	gui.push_back(&pauseMenu);
 
-	health = Bar(sprites["gui"], 100, 25, 2);
+	health = Bar(sprites["bar"], 100, 25, 2);
 	health.position = Vector(3, 95);
 	gui.push_back(&health);
+
+	energy = health;
+	energy.color = Bar::blue;
+	energy.position = Vector(3, 92);
+	gui.push_back(&energy);
 
 
 
@@ -96,8 +108,8 @@ Game::Game()
 
 	fireEmitter.sprite.index = 7;
 	fireEmitter.maxLifetime = 1;
-	fireEmitter.velocityDev.x = 10;
-	fireEmitter.velocityDev.y = 10;
+	fireEmitter.velocityDev.x = 20;
+	fireEmitter.velocityDev.y = 20;
 	fireEmitter.startSize = 5;
 	fireEmitter.endSize = 0;
 	fireEmitter.sprite = sprites["particles"];
@@ -109,6 +121,7 @@ void Game::reset()
 	exploring = false;
 	gameOverMenu.visible = false;
 	health.visible = true;
+	energy.visible = true;
 	enemyCount.visible = true;
 	delete cluster;
 	cluster = new Cluster(this, 100, sprites["planet"]);
@@ -126,7 +139,7 @@ void Game::reset()
 	}
 	entities.clear();
 
-	for (int i = 0; i < totalEnemies; i++)
+	for (int i = 0; i < spitters; i++)
 	{
 		float dist = Util::randFloat()*(cluster->radius - 100) + 100;
 		float angle = Util::randFloat()*M_PI * 2;
@@ -134,6 +147,25 @@ void Game::reset()
 		position.rotate(angle);
 		position.normalize(dist);
 		entities.push_back(new Enemy(this, position));
+	}
+	for (int i = 0; i < chasers; i++)
+	{
+		float dist = Util::randFloat()*(cluster->radius - 100) + 100;
+		float angle = Util::randFloat()*M_PI * 2;
+		Vector position(1, 1);
+		position.rotate(angle);
+		position.normalize(dist);
+		Enemy* e = new Enemy(this, position);
+		e->size =e->size* .75;
+		e->circleRange = 0;
+		e->fireRate = -1;
+		e->damage = 15;
+		e->maxHealth = 10;
+		e->health = e->maxHealth;
+		e->speed = 40;
+		e->maxPuff = 1;
+		e->sprite.index = 4;
+		entities.push_back(e);
 	}
 }
 void Game::update(float elapsed)
@@ -146,9 +178,11 @@ void Game::update(float elapsed)
 	if (exploring)
 	{
 		health.visible = false;
+		energy.visible = false;
 		enemyCount.visible = false;
 	}
 	health.current = player->health;
+	energy.current = player->energy;
 	Vector compassReal = player->position;
 	compassReal.y += 40;
 	Entity* closest = NULL;
@@ -156,6 +190,12 @@ void Game::update(float elapsed)
 	for (int i = 0; i < entities.size(); i++)
 	{
 		entities[i]->update(elapsed);
+		if (!entities[i]->active)
+		{
+			entities.erase(entities.begin() + i);
+			i--;
+			continue;
+		}
 		if (entities[i]->type == Entity::enemy)
 		{
 			if (enemiesLeft == 0 || entities[i]->position.distance(compassReal) < minDistance)
@@ -165,15 +205,11 @@ void Game::update(float elapsed)
 			}
 			enemiesLeft++;
 		}
-		if (entities[i]->active && player->collides(*entities[i]))
+		if (entities[i]->active && entities[i]->collides(*player))
 		{
 			entities[i]->playerCollision(player);
 		}
-		if (!entities[i]->active)
-		{
-			entities.erase(entities.begin() + i);
-			i--;
-		}
+		
 	}
 	if (closest)
 	{
@@ -193,7 +229,7 @@ void Game::update(float elapsed)
 		gui[i]->update(elapsed);
 	}
 
-	enemyCount.text = "Enemeis Left: " + to_string(enemiesLeft);
+	enemyCount.text = "Enemies Left: " + to_string(enemiesLeft);
 	if (enemiesLeft == 0 && !exploring)
 	{
 		currentMenu = &victoryMenu;
@@ -225,6 +261,7 @@ void Game::start(ShaderProgram *program)
 	model.Rotate(0.15);
 	model.Scale(3, 5, 1);
 	program->setModelMatrix(model);
+	program->setAlpha(1);
 	glUseProgram(program->programID);
 
 
@@ -253,38 +290,6 @@ void Game::start(ShaderProgram *program)
 
 
 
-}
-vector<Planet> Game::findLights(Vector position)
-{
-	vector<Planet> output;
-	vector<float> dists;
-	for (int i = 0; i < cluster->planets.size(); i++)
-	{
-		Planet p = cluster->planets[i];
-		if (p.type == Planet::star)
-		{
-			if (output.size() < 5)
-			{
-				output.push_back(p);
-				dists.push_back(p.position.distance(position));
-			}
-			else
-			{
-				float d = p.position.distance(position);
-				for (int j = 0; j < output.size(); j++)
-				{
-					if (dists[j] > d)
-					{
-						output[j] = p;
-						dists[j] = d;
-						break;
-					}
-					
-				}
-			}
-		}
-	}
-	return output;
 }
 void Game::renderFade(ShaderProgram *program, int frame)
 {
@@ -339,6 +344,7 @@ void Game::renderGui(ShaderProgram* program)
 	glUseProgram(program->programID);
 	if (state == title)
 	{
+		currentMenu = &mainMenu;
 		renderBG(program);
 		GLuint font = sprites["font"].texture;
 		Util::drawText(program, font, "Gravity Well", 80, 80, 10, 2);
@@ -346,19 +352,6 @@ void Game::renderGui(ShaderProgram* program)
 	}
 	else if (state != done)
 	{
-		for (int i = 0; i < indicators.size(); i++)
-		{
-			if (!indicators[i]->active)
-			{
-				delete indicators[i];
-				indicators.erase(indicators.begin() + i);
-				i--;
-			}
-			else if (indicators[i]->visible)
-			{
-				indicators[i]->render(program);
-			}
-		}
 		for (int i = 0; i < gui.size(); i++)
 		{
 			if (gui[i]->visible)
@@ -397,6 +390,19 @@ void Game::render(ShaderProgram *program)
 				entities.erase(entities.begin() + i);
 				i--;
 			}
+			for (int i = 0; i < indicators.size(); i++)
+			{
+				if (!indicators[i]->active)
+				{
+					delete indicators[i];
+					indicators.erase(indicators.begin() + i);
+					i--;
+				}
+				else if (indicators[i]->visible)
+				{
+					indicators[i]->render(program);
+				}
+			}
 		}
 	}
 }
@@ -415,21 +421,69 @@ void Game::killAll()
 		entities[i]->active = false;
 	}
 }
+void Game::loadCluster(string path)
+{
+	ifstream file("resources\\"+path);
+	string line;
+	if (file.is_open())
+	{
+		getline(file, line);
+		if (line == "[GWC]")
+		{
+			killAll();
+			cluster = new Cluster(this, sprites["tutorial"]);
+			while (getline(file, line))
+			{
+				if (line.substr(0, 2) == "P:")
+				{
+					cluster->planets.push_back(Planet(line.substr(3),cluster,cluster->sprite));
+				}
+
+				else if(line.substr(0, 2) == "S:")
+				{
+					Planet p(line.substr(3), cluster, cluster->sprite);
+					p.type = Planet::star;
+					cluster->planets.push_back(p);
+
+				}
+				else if (line.substr(0, 2) == "E:")
+				{
+					entities.push_back(new Enemy(line.substr(3), this));
+				}
+			}
+			state = play;
+		}
+	}
+		
+
+}
 void Game::menuSelect()//I hate this function, but I'm not sure else I should implement this
 {
 	if (currentMenu->title == "Main Menu")
 	{
 		switch (currentMenu->selected)
 		{
-		case 1:
-			killAll();
-			exploring = true;
 		case 0:
+			reset();
+			exploring = false;
+			state = play;
+			msgBox.visible = false;
+			lastFrameTime = (float)SDL_GetTicks() / 1000;
+			break;
+		case 1:
+			reset();
+			exploring = true;
+			killAll();
 			state = play;
 			msgBox.visible = false;
 			lastFrameTime = (float)SDL_GetTicks() / 1000;
 			break;
 		case 2:
+			reset();
+			exploring = true;
+			loadCluster("tutorial.cluster");
+			break;
+		case 3:
 			state = done;
 			break;
 		}
@@ -445,7 +499,6 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 		case 1:
 			state = title;
 			currentMenu->visible = false;
-			currentMenu = &mainMenu;
 			break;
 		}
 	}
@@ -454,14 +507,14 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 		switch (currentMenu->selected)
 		{
 		case 0:
-			state = title;
 			currentMenu->visible = false;
-			currentMenu = &mainMenu;
 			reset();
+			state = play;
 			break;
 		case 1:
-			state = done;
-			break;
+			state = title;
+			currentMenu->visible = false;
+			reset();
 		}
 	}
 	else if (currentMenu->title == "Victory!")
@@ -471,7 +524,6 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 		case 0:
 			state = title;
 			currentMenu->visible = false;
-			currentMenu = &mainMenu;
 			reset();
 			break;
 		case 1:
@@ -480,6 +532,7 @@ void Game::menuSelect()//I hate this function, but I'm not sure else I should im
 			state = play;
 		}
 	}
+	currentMenu->selected = 0;
 }
 void Game::addSprite(string name, const char* path, int i, int w, int h)
 {
@@ -503,16 +556,17 @@ void Game::showMsg(string msg, string subMsg1, string subMsg2, string subMsg3)
 	msgBox.visible = true;
 	state = message;
 }
-void Game::triggerParticles(ParticleEmitter& pe, Vector position)
+void Game::triggerFire(Vector position)
 {
-	pe.position = position;
-	pe.gravity = position;
-	pe.mass = 0;
-	pe.trigger();
+	fireEmitter.position = position;
+	fireEmitter.velocity = Vector(0, 0);
+	fireEmitter.gravity = position;
+	fireEmitter.mass = .5;
+	fireEmitter.trigger();
 }
 void Game::triggerParticles(ParticleEmitter& pe, Vector position, Planet p, float speed)
 {
-	pe.position = position;
+	pe.position = (position*3+p.position) / 4;
 	pe.gravity = p.position;
 	pe.mass = p.mass();
 
@@ -525,7 +579,7 @@ void Game::triggerDust(Vector position, Planet p, float speed)
 {
 	dustEmitter.position = position;
 	dustEmitter.gravity = p.position;
-	dustEmitter.mass = p.mass();
+	dustEmitter.mass = p.mass() / 2;
 
 	dustEmitter.velocity = position - p.position;
 	dustEmitter.velocity.normalize(speed);

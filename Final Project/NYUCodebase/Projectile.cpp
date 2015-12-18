@@ -7,12 +7,13 @@ Projectile::Projectile()
 {
 
 }
-Projectile::Projectile(Game* g, Vector pos) :
+Projectile::Projectile(Game* g, Vector pos, float damage) :
 Entity(g)
 {
 
 	type = projectile;
 	position = pos;
+	this->damage = damage;
 	size = Vector(2,2);
 	pe = ParticleEmitter(20);
 	sprite = g->sprites["particles"];
@@ -30,9 +31,9 @@ Entity(g)
 
 	pe.start();
 }
-void Projectile::render(ShaderProgram* program)
+void Projectile::render(ShaderProgram* program, int offset)
 {
-	Entity::render(program);
+	//Entity::render(program);
 	pe.render(program);
 }
 

@@ -11,7 +11,6 @@ public:
 	float range = 12;
 	bool active = false;
 	Vector dir;
-	Vector size;
 	Animation anim;
 	float damage = 10;
 	float maxLifetime = .5;
@@ -20,7 +19,7 @@ public:
 	Weapon();
 	Weapon(Sprite s, Player* player);
 
-	void swing(Vector);
+	void swing(Vector direction, Vector velocity);
 
 	void render(ShaderProgram*);
 	void update(float);

@@ -17,23 +17,29 @@ Player::Player(Game* g, Sprite sprite)
 	health = maxHealth;
 	hook = new Hook(this);
 	sword = new Weapon(g->sprites["attack"],this);
-	hook->sprite = g->sprites["hook"];
+	hook->sprite = g->sprites["particles"];
 	this->sprite = sprite;
+	position.x = 0;
 	position.y = 15;
 	size = Vector(4, 7);
 
 	death.loop = false;
 	death.addFrame(2, 0.05);
+	death.addFrame(4, 0.05);
 	death.addFrame(5, 0.05);
 	death.addFrame(6, 0.05);
 	death.addFrame(7, 0.05);
-	death.addFrame(8, 0.05);
-	death.addFrame(9, 0.05);
+
+	walkAnim.duration = 0.5;
+	walkAnim.addFrame(8, 1);
+	walkAnim.addFrame(9, 1);
+	walkAnim.addFrame(10, 1);
+	walkAnim.addFrame(11, 1);
 
 }
 bool Player::collidesP(Planet& p)
 {
-	if (p.on)
+	if (p.on || shifted)
 	{
 		return false;
 	}
@@ -43,16 +49,17 @@ void Player::attack(Vector dir)
 {
 	if (!sword->active)
 	{
-		sword->swing(dir);
+		sword->swing(dir,velocity);
 	}
 }
 void Player::die()
 {
-	if (state != dying)
+	if (!dying)
 	{
+		g->playSound("death");
 		hurt = deathTime;
 	}
-	state = dying;
+	dying = true;
 }
 
 void Player::jump()
@@ -84,7 +91,7 @@ void Player::land(Planet &p)
 	}
 	else if (p.type == Planet::star)
 	{
-		g->triggerParticles(g->fireEmitter,position, p,10);
+		g->triggerParticles(g->fireEmitter,position, p,20);
 		planet = &p;
 		hook->state = Hook::away;
 		state = onGround;
@@ -95,9 +102,16 @@ void Player::land(Planet &p)
 		
 	}
 }
+void Player::shift()
+{
+	shifted = true;
+	shiftDown = true;
+	state = inAir;
+	shiftingTime = 0.25;
+}
 void Player::takeDamage(float dmg)
 {
-	if (hurt > 0)
+	if (hurt > 0 || shifted)
 	{
 		return;
 	}
@@ -107,13 +121,12 @@ void Player::takeDamage(float dmg)
 		if (health <= 0)
 		{
 			die();
-			g->playSound("death");
 			return;
 		}
 	}
 	g->playSound("hurt");
 	hurt = 1;
-	
+
 }
 void Player::walk()
 {
@@ -160,16 +173,7 @@ void Player::pop(Planet& p)
 
 }
 
-void Player::render(ShaderProgram* program)
-{
-	Entity::render(program);
-	hook->render(program);
-	if (sword->active)
-	{
-		sword->render(program);
-	}
-	
-}
+
 void Player::update(float elapsed)
 {
 
@@ -178,7 +182,7 @@ void Player::update(float elapsed)
 		for (int i = 0; i < g->entities.size(); i++)
 		{
 			Entity*e = g->entities[i];
-			if (e->collides(*sword))
+			if (sword->collides(*e))
 			{
 				if (e->type == Entity::enemy)
 				{
@@ -190,6 +194,42 @@ void Player::update(float elapsed)
 				}
 			}
 		}
+	}
+	bool splinch = false;
+	if (shifted )
+	{
+		energy -= shiftCost * elapsed;
+		if (energy <= 0 && !g->exploring)
+		{
+			shifted = false;
+			splinch = true;
+		}
+		else if (!shiftDown)
+		{
+			shifted = false;
+			for (int i = 0; i < g->cluster->planets.size(); i++)
+			{
+				if (collidesP(g->cluster->planets[i]))
+				{
+					if (g->cluster->planets[i].position.distance(position) < g->cluster->planets[i].size / 2 - 5)
+					{
+						shifted = true;
+						break;
+					}
+					
+				}
+			}
+		}
+		
+	}
+	if (shiftingTime > 0)
+	{
+		shiftingTime -= elapsed;
+	}
+	else if(energy < maxEnergy)
+	{
+		
+		energy += energyRegen* elapsed;
 	}
 	if (hurt > 0)
 	{
@@ -205,7 +245,13 @@ void Player::update(float elapsed)
 
 		Vector pull = p.position - position;
 		pull.normalize();
-		pull = pull / pow(position.distance(p.position), 1.5);
+		float distance = position.distance(p.position);
+		//because gravity is weaker inside of a planet;
+		if (distance < p.size/2)
+		{
+			distance = p.size - distance;
+		}
+		pull = pull / pow(distance, 1.5);
 		pull = pull*p.size*p.density*mass;
 		totalPull = totalPull + pull;
 		if (pull.length() > maxPull)
@@ -214,7 +260,7 @@ void Player::update(float elapsed)
 			maxPull = pull.length();
 		}
 	}
-	if (state == dying)
+	if (dying)
 	{
 		velocity = velocity + accel* elapsed;
 		position = position + velocity * elapsed;
@@ -238,7 +284,7 @@ void Player::update(float elapsed)
 	}
 	else if (state==inAir)
 	{
-		accel = totalPull;
+		accel = totalPull * !shifted;
 		rotation = (majorPuller.position - position).angle() + M_PI / 2;
 		velocity = velocity + accel *elapsed;
 		position = position + velocity * elapsed;
@@ -246,7 +292,13 @@ void Player::update(float elapsed)
 		{
 			if (collidesP(g->cluster->planets[i]))
 			{
-				
+				if (splinch && g->cluster->planets[i].type == Planet::moon)
+				{
+					if (g->cluster->planets[i].position.distance(position) < g->cluster->planets[i].size / 2 -5)
+					{
+						takeDamage(maxHealth * 2);
+					}
+				}
 				land(g->cluster->planets[i]);
 			}
 			else
@@ -261,15 +313,7 @@ void Player::update(float elapsed)
 }
 void Player::changeSprite()
 {
-	if (walking < 0)
-	{
-		sprite.flipped = false;
-	}
-	else if (walking > 0)
-	{
-		sprite.flipped = true;
-	}
-	if (state == dying)
+	if (dying)
 	{
 		sprite.index = death.getFrame((deathTime - hurt) / deathTime);
 	}
@@ -288,8 +332,44 @@ void Player::changeSprite()
 	{
 		sprite.index = 1;
 	}
+	else if (walking < 0)
+	{
+		sprite.flipped = false;
+		sprite.index = walkAnim.getFrame();
+	}
+	else if (walking > 0)
+	{
+		sprite.flipped = true;
+		sprite.index = walkAnim.getFrame();
+	}
 	else
 	{
 		sprite.index = 0;
+
 	}
+}
+void Player::render(ShaderProgram* program)
+{
+
+	
+	if (shifted && shiftingTime <= 0)
+	{
+		program->setInvert(true);
+	}
+	Entity::render(program);
+	hook->render(program);
+	if (sword->active)
+	{
+		sword->render(program);
+	}
+	program->setInvert(false);
+	if (shiftingTime > 0)
+	{
+
+		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+		g->sprites["particles"].render(program, position.x, position.y, 10 - shiftingTime * 40, 10 - shiftingTime * 40, 0, 1, false);
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+
 }

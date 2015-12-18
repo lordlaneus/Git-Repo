@@ -9,6 +9,8 @@ class Entity;
 class Bar: public GUI
 {
 public:
+	enum Color{red=1, blue = 2, green =3};
+	Color color = red;
 	bool fixed = true;
 	Entity* e;
 	float max;

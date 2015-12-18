@@ -1,5 +1,6 @@
 #include "Planet.h"
 #include "Cluster.h"
+#include <sstream>
 #include <vector>
 
 using namespace std;
@@ -7,14 +8,29 @@ Planet::Planet()
 {
 
 }
+Planet::Planet(string line, Cluster* cluster, Sprite sprite)
+{
+	this->cluster = cluster;
+	this->sprite = sprite;
+	
+	istringstream iss(line);
+	iss >> position.x;
+	iss >> position.y;
+	iss >> size;
+	iss >> density;
+	iss >> this->sprite.index;
+
+
+	
+}
 Planet::Planet(Cluster* cluster, Sprite sprite, float x, float y, float size, float density)
 {
 
 	this->cluster = cluster;
 	this->sprite = sprite;
 	position.x = x;
-	on = false;
 	position.y = y;
+	on = false;
 	this->size = size;
 	this->density = density;
 

@@ -7,6 +7,7 @@
 class Player;
 class Hook{
 public:
+	float strength = 100;
 	int segments = 20;
 	float maxLength = 40;
 	float extended = 0;
@@ -21,7 +22,7 @@ public:
 	float size;
 
 	Hook(Player*);
-	void shoot(float, float);
+	void shoot(Vector target, float strength =100,float length=40,float size=1);
 	void update(float elapsed);
 	void render(ShaderProgram*);
 	void renderChain(ShaderProgram*);

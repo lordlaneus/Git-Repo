@@ -6,6 +6,11 @@ Cluster::Cluster()
 {
 
 }
+Cluster::Cluster(Game*, Sprite sprite)
+{
+	this->g;
+	this->sprite = sprite;
+}
 Cluster::Cluster(Game* g, int size, Sprite s)
 {
 	this->g = g;

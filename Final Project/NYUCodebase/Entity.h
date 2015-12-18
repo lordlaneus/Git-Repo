@@ -33,7 +33,7 @@ public:
 	enum Type{ player, projectile, enemy };
 	virtual void update(float);
 	void setTexture(GLuint, int, int, int);
-	virtual void render(ShaderProgram*);
+	virtual void render(ShaderProgram*, int = 0);
 	virtual void playerCollision(Player* p);
 	bool collides(Planet& p);
 	bool collides(Entity&);

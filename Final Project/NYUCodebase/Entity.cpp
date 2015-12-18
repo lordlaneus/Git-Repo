@@ -17,11 +17,28 @@ Entity::Entity(Game* g)
 }
 bool Entity::collides(Entity&e)
 {
+	if (!collides(e, cos(rotation), sin(rotation)))
+	{
+		return false;
+	}
+	if (!collides(e, cos(rotation), cos(rotation)))
+	{
+		return false;
+	}
+	if (!collides(e, cos(e.rotation), sin(e.rotation)))
+	{
+		return false;
+	}
+	if (!collides(e, sin(e.rotation), cos(e.rotation)))
+	{
+		return false;
+	}
 
+	int a = 5;
 	return (collides(e, cos(rotation), sin(rotation)) &&
-		collides(e, cos(rotation+TAU), sin(rotation+TAU))&&
+		collides(e, sin(rotation), cos(rotation))&&
 		collides(e, cos(e.rotation), sin(e.rotation)) &&
-		collides(e, cos(e.rotation+TAU), sin(e.rotation+TAU)));
+		collides(e, sin(e.rotation), cos(e.rotation)));
 
 }
 bool Entity::collides(Planet& p)
@@ -56,9 +73,11 @@ vector<float> Entity::nVertices(Vector normal)
 {
 	vector<float>nv;
 	nv.push_back((position + (size / 2).rotate(rotation)).dot(normal));
-	nv.push_back((position + (size / 2).rotate(rotation + TAU)).dot(normal));
-	nv.push_back((position + (size / 2).rotate(rotation + TAU * 2)).dot(normal));
-	nv.push_back((position + (size / 2).rotate(rotation + TAU * 3)).dot(normal));
+	nv.push_back((position - (size / 2).rotate(rotation)).dot(normal));
+	Vector invSize = size;
+	invSize.x = -size.x;
+	nv.push_back((position + (invSize / 2).rotate(rotation)).dot(normal));
+	nv.push_back((position -(invSize / 2).rotate(rotation)).dot(normal));
 
 	return nv;
 }
@@ -83,11 +102,20 @@ void Entity::update(float elapsed){
 	
 }
 
-void Entity::render(ShaderProgram *program)
+void Entity::render(ShaderProgram *program, int offset)
 {
-	
-	float u = (float)(((int)sprite.index) % sprite.sheetW) / (float)sprite.sheetW;
-	float v = (float)(((int)sprite.index) / sprite.sheetW) / (float)sprite.sheetH;
+	float u;
+	float v;
+	if (offset <0)
+	{
+			u = (float)((offset) % sprite.sheetW) / (float)sprite.sheetW;
+			v = (float)((offset) / sprite.sheetW) / (float)sprite.sheetH;
+	}
+	else
+	{
+			u = (float)(((int)sprite.index + offset) % sprite.sheetW) / (float)sprite.sheetW;
+			v = (float)(((int)sprite.index + offset) / sprite.sheetW) / (float)sprite.sheetH;
+	}
 	float spriteWidth = 1.0 / (float)sprite.sheetW;
 	float spriteHeight = 1.0 / (float)sprite.sheetH;
 	GLfloat texCoords[] = {

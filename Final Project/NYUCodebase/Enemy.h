@@ -16,8 +16,9 @@ public:
 	Vector baseSize;
 	int circleDir = 1;
 	float startHealth = 25;
+	float damage = 10;
 	float avoidance = 20;
-	float landBonus = 1.5;
+	float landBonus = M_PI;
 	float maxPuff = 1.5;
 	float puffStart = .07;
 	float fireRate = 2.5;
@@ -28,6 +29,7 @@ public:
 	float speed = 10;
 
 	Enemy();
+	Enemy(std::string, Game*);
 	Enemy(Game*, Vector position);
 
 	void die();
@@ -36,7 +38,7 @@ public:
 
 	void takeDamage(float dmg);
 	void update(float);
-	void render(ShaderProgram*);
+	void render(ShaderProgram* program, int offset);
 
 	
 };
