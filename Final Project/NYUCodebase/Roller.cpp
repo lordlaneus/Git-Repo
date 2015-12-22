@@ -11,11 +11,19 @@ Roller::Roller(Game* g, Vector position):
 Enemy(g,position)
 { 
 	dir = 1;
-	if (Util::randFloat() > 5)
+	if (Util::randFloat() < 0.5)
 	{
 		dir = -1;
 	}
 	planet = g->cluster->closestPlanet(position);
+	damage = rollerDamage;
+	baseSize = Vector(baseWidth, baseHeight);
+	maxHealth = rollerMaxHealth;
+	health = maxHealth;
+	bar->max = maxHealth;
+	size = baseSize;
+	speed = rollerSpeed;
+	sprite.index = 3;
 	pop(planet);
 }
 

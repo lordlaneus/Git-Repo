@@ -13,14 +13,16 @@ Cluster::Cluster(Game*, Sprite sprite)
 }
 Cluster::Cluster(Game* g, int size, Sprite s)
 {
-	this->g = g;
-	x = 0;
-	y = 0;
+	this->g = g; 
 	sprite = s;
+
+	//create starting planet
 	Planet home(this, sprite);
 	home.size = 50;
 	home.sprite.index = 0;
 	planets.push_back(home);
+
+	//create other planets
 	for (int i = 0; i < size; i++)
 	{
 		Planet p(this, sprite);
@@ -32,6 +34,7 @@ Cluster::Cluster(Game* g, int size, Sprite s)
 		p.position = Vector(1, 1);
 		do
 		{
+			//pick a  random point in the cluster
 			float dist = Util::randFloat() * radius;
 			float angle = Util::randFloat()*M_PI * 2;
 			p.position.rotate(angle);
@@ -47,7 +50,7 @@ Cluster::Cluster(Game* g, int size, Sprite s)
 	}
 }
 void Cluster::update(float tick){
-
+	//in case I want to add dynamic planets in the future
 }
 Planet* Cluster::checkCollision(Vector v)
 {

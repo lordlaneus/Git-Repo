@@ -8,27 +8,35 @@ Player::Player()
 	
 
 }
-
+Player::~Player()
+{
+	delete hook;
+	delete weapon;
+}
 Player::Player(Game* g, Sprite sprite) 
 {
 	this->g = g;
-	planet = &g->cluster->planets[0];
-	maxHealth = 100;
+	this->sprite = sprite;
+	planet = &g->cluster->planets[0];// this initial value shouldn't be used, but it could prevent a crash
 	health = maxHealth;
 	hook = new Hook(this);
 	weapon = new Weapon(g->sprites["attack"],this);
 	hook->sprite = g->sprites["particles"];
 	this->sprite = sprite;
+
 	position.x = 0;
-	position.y = 15;
+	position.y = 15; // so that the player pops to the top of the starting world
+
 	size = Vector(4, 7);
 
+
+	//configure animations
 	deathAnim.loop = false;
-	deathAnim.addFrame(2, 0.05);
-	deathAnim.addFrame(4, 0.05);
-	deathAnim.addFrame(5, 0.05);
-	deathAnim.addFrame(6, 0.05);
-	deathAnim.addFrame(7, 0.05);
+	deathAnim.addFrame(2, 1);
+	deathAnim.addFrame(4, 1);
+	deathAnim.addFrame(5, 1);
+	deathAnim.addFrame(6, 1);
+	deathAnim.addFrame(7, 1);
 
 	walkAnim.duration = 0.5;
 	walkAnim.addFrame(8, 1);
@@ -62,7 +70,7 @@ void Player::attack(Vector dir)
 void Player::charge()
 {
 	charging = true;
-	chargeTime = 1;
+	chargeTime = 0;
 }
 void Player::die()
 {
@@ -75,6 +83,7 @@ void Player::die()
 }
 bool Player::drainEnergy(float amount)
 {
+	draining = true;
 	if (amount < energy)
 	{
 		energy -= amount;
@@ -209,7 +218,7 @@ void Player::zip()
 
 void Player::update(float elapsed)
 {
-
+	draining = false;
 	if (weapon->active)
 	{
 		for (int i = 0; i < g->entities.size(); i++)
@@ -228,7 +237,8 @@ void Player::update(float elapsed)
 			}
 		}
 	}
-	bool splinch = false;
+	bool splinch = false; 
+	//[splinch] Verb. 1.) The action of materializing inside a solid object, usually to with disastrous consequences.
 	if (shifted)
 	{
 		if (!drainEnergy(shiftCost*elapsed))
@@ -261,11 +271,7 @@ void Player::update(float elapsed)
 		chargeTime += elapsed;
 		}
 	}
-	if (!shifted&&!charging&&energy < maxEnergy)
-	{
 
-		energy += energyRegen* elapsed;
-	}
 	if (shiftingTime > 0)
 	{
 		shiftingTime -= elapsed;
@@ -275,9 +281,9 @@ void Player::update(float elapsed)
 	{
 	hurt -= elapsed;
 	}
-	Vector totalPull;
+	Vector totalPull;// the vector of overall forces exerted on the player from gravity
 	float maxPull = 0;
-	Planet majorPuller;
+	Planet majorPuller;//which planet is exerting the strongest relative pull
 	for (int i = 0; i < g->cluster->planets.size(); i++)
 	{
 
@@ -286,13 +292,12 @@ void Player::update(float elapsed)
 		Vector pull = p.position - position;
 		pull.normalize();
 		float distance = position.distance(p.position);
-		//because gravity is weaker inside of a planet;
-		if (distance < p.size/2)
+		if (distance < p.size/2)//because gravity is weaker inside of a planet;
 		{
 			distance = p.size - distance;
 		}
-		pull = pull / pow(distance, 1.5);
-		pull = pull*p.size*p.density*mass;
+		pull = pull / pow(distance, 1.5);//should technically square the distance, but 1.5 gives the game a better feel
+		pull = pull*p.mass()*mass;
 		totalPull = totalPull + pull;
 		if (pull.length() > maxPull)
 		{
@@ -308,7 +313,7 @@ void Player::update(float elapsed)
 		{
 			g->currentMenu = &g->gameOverMenu;
 			g->gameOverMenu.show();
-			g->state = Game::gameOver;
+			g->state = Game::menu;
 
 		}
 	}
@@ -326,10 +331,10 @@ void Player::update(float elapsed)
 		position = planet->position + newPos;
 		rotation = (planet->position - position).angle() + M_PI / 2;
 	}
-	else
+	else//i.e. in the air
 	{
-		accel = totalPull * !shifted;
-		rotation = (majorPuller.position - position).angle() + M_PI / 2;
+		accel = totalPull * !shifted;// if the player is shifted the pull of gravity is nullified
+		rotation = (majorPuller.position - position).angle() + M_PI / 2;// points feet and major puller
 		velocity = velocity + accel *elapsed;
 		position = position + velocity * elapsed;
 		for (int i = 0; i < g->cluster->planets.size(); i++)
@@ -340,7 +345,7 @@ void Player::update(float elapsed)
 				{
 					if (g->cluster->planets[i].position.distance(position) < g->cluster->planets[i].size / 2 -5)
 					{
-						takeDamage(maxHealth * 2);
+						takeDamage(maxHealth * 2);//i.e. insta kill
 					}
 				}
 				land(g->cluster->planets[i]);
@@ -356,6 +361,14 @@ void Player::update(float elapsed)
 		zipTime -= elapsed;
 		Vector dest = planet->position - zipPosition;
 		position = zipPosition + (dest *((zipLength - zipTime) / zipLength) * 2);
+	}
+	if (g->cPressed&& !drainEnergy(compassCost*elapsed))
+	{
+		g->cPressed = false;
+	}
+	if (!draining && energy<maxEnergy)
+	{
+		energy += energyRegen* elapsed;// refills energyy provided no calls have been made to drainEnergy()
 	}
 	hook->update(elapsed);
 	weapon->update(elapsed);
@@ -424,6 +437,26 @@ void Player::render(ShaderProgram* program)
 		g->sprites["gui"][3].render(program, position.x, position.y, 10 - shiftingTime * 40, 10 - shiftingTime * 40);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	if (g->cPressed)
+	{
+		Vector direction(1, 1);
+		Entity* closest = NULL;
+		float minDistance = FLT_MAX;
+		for (int i = 0; i < g->entities.size(); i++)
+		{
+			if (g->entities[i]->type == Entity::enemy &&  g->entities[i]->position.distance(position) < minDistance)
+			{
+				closest = g->entities[i];
+				minDistance = (g->entities[i]->position.distance(position));
+			}
+		}
+		if (closest)
+		{
+			Vector temp = (closest->position - position).normalize(5);
+
+				g->sprites["gui"][1].render(program, position.x + temp.x, position.y + temp.y, 3, 3, temp.angle());
+		}
 	}
 
 }

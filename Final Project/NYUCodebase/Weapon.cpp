@@ -25,9 +25,9 @@ void Weapon::swing(Vector dir, Vector velocity, float charge)
 	this->dir = dir;
 	this->velocity = velocity;
 	this->charge = charge;
-	size = Vector(3, 8) * charge*chargeMult;
-	range = baseRange * charge * chargeMult;
-	damage = baseDamage * charge *chargeMult;
+	size = Vector(baseWidth, baseHeight) + Vector(baseWidth, baseHeight) * charge*chargeMult;
+	range = baseRange + baseRange *charge * rangeChargeMult;
+	damage = baseDamage + baseDamage* charge *chargeMult;
 	position = player->position;
 	rotation = dir.angle();
 	active = true;

@@ -29,38 +29,46 @@ class Entity;
 class Player;
 class Game {
 public:
-	const int enemyChasers = 25;
-	const int enemyRollers = 15;
-	const int enemySpitters = 10;
-	const float startupLength = 3;
+	const int enemyChasers = 15;
+	const int enemyRollers = 10;
+	const int enemySpitters = 5;
+	const float startupLength = 3;//3
 
-	enum State { ready, startup, title, play, paused, message, victory, gameOver, done, };
+	enum State { ready, startup, title, play, menu, message, done};
+
+
+	Menu gameOverMenu;
+	Menu mainMenu;
+	Menu pauseMenu;
+	Menu playMenu;
+	Menu victoryMenu;
+
 
 	Cluster* cluster;
+	bool cPressed;
 	Menu* currentMenu;
 	Cursor cursor;
-	Compass compass;
+	//Compass compass;
 	DustEmitter dustEmitter;
 	TextDisplay enemyCount;
 	Bar energy;
 	std::vector<Entity*> entities;
 	bool exploring = false;
 	ParticleEmitter fireEmitter;
-	Menu gameOverMenu;
 	std::vector<GUI*> gui;
 	Bar health;
 	std::vector<GUI*> indicators;
 	float lastFrameTime;
-	Menu mainMenu;
 	MsgBox msgBox;
 	std::map < std::string, Mix_Music*> music;
-	Menu pauseMenu;
+	
 	Player* player;
 	std::map < std::string, Mix_Chunk*> sounds;
 	std::map<std::string, Sprite> sprites;
 	float startupTimer = 0;
-	State state = title;
-	Menu victoryMenu;
+	State state;
+	float timer;
+	TextDisplay timerDisplay;
 
 	Game();
 

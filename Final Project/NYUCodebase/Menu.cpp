@@ -5,6 +5,14 @@ using namespace std;
 
 Menu::Menu()
 {
+	position = Vector(80, 70);
+	size = Vector(80, 80);
+	margin = 30;
+	visible = false;
+	showTitle = true;
+	fontSize = 6;
+	fontSpacing = 1;
+	lineSpacing = 10;
 }
 
 void Menu::addOption(string option)
@@ -18,6 +26,10 @@ void Menu::down()
 	{
 		selected = 0;
 	}
+}
+string Menu::selection()
+{
+	return options[selected];
 }
 void Menu::up()
 {
@@ -49,6 +61,6 @@ void Menu::render(ShaderProgram* program)
 		Util::drawText(program, font.texture, options[i], position.x-size.x/2+margin, optionsStart-(i*fontSize+i*lineSpacing), fontSize, fontSpacing,false);
 		
 	}
-	font.render(program, position.x-size.x/2+margin-fontSize, optionsStart- (selected*fontSize + selected*lineSpacing), fontSize, fontSize);
+	font.render(program, position.x-size.x/2+margin-fontSize, optionsStart- (selected*fontSize + selected*lineSpacing), fontSize, fontSize,0);
 }
 

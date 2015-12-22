@@ -41,9 +41,10 @@ void Bar::render(ShaderProgram *program)
 		0,0,
 		1,0
 	});
-
+	
 	//draw front
 	float perc = current / max;
+	perc -= 15 / 16;
 	float top = color*0.25;
 	float btm = top + 0.25;
 	if (perc < 0)

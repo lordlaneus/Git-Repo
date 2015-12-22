@@ -3,11 +3,10 @@
 
 using namespace std;
 
-Vector::Vector(float x, float y, float z)
+Vector::Vector(float x, float y)
 {
 	this->x = x;
 	this->y = y;
-	this->z = z;
 }
 float Vector::angle()
 {
@@ -18,7 +17,6 @@ void Vector::clear()
 {
 	x = 0;
 	y = 0;
-	z = 0;
 }
 float Vector::distance(Vector v)
 {
@@ -30,7 +28,7 @@ float Vector::dot(Vector v)
 }
 float Vector::length()
 {
-	return sqrt(x*x + y*y+z*z);
+	return sqrt(x*x + y*y);
 
 
 }
@@ -49,7 +47,6 @@ Vector Vector::normalize(float scale)
 		l /= scale;
 		x /= l;
 		y /= l;
-		z /= l;
 	}
 	return *this;
 }

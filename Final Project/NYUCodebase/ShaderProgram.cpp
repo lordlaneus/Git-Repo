@@ -87,11 +87,6 @@ GLuint ShaderProgram::loadShaderFromString(const std::string &shaderContents, GL
     return shaderID;
 }
 
-void ShaderProgram::setLights(Vector position, Vector color)
-{
-	glUniform2f(lightPositionUniform, position.x,position.y);
-	glUniform3f(lightColorUniform, color.x, color.y, color.z);
-}
 void ShaderProgram::setInvert(bool invert)
 {
 	glUseProgram(programID);

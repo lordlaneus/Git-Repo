@@ -8,9 +8,12 @@ class Weapon: public Entity
 {
 public:
 	const float baseDamage = 10;
+	const float baseHeight = 8;
 	const float baseRange = 12;
+	const float baseWidth = 3;
 	const float chargeMult = 1;
 	const float maxLifetime = .5;
+	const float rangeChargeMult =.25;
 	
 	bool active = false;
 	Animation anim;

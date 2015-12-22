@@ -11,10 +11,9 @@ class Planet;
 class Game;
 class Cluster{
 public:
+	const float radius = 300;
+
 	Game* g;
-	float radius = 300;
-	int x;
-	int y;
 	Sprite sprite;
 	std::vector<Planet> planets;
 

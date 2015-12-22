@@ -22,6 +22,9 @@ public:
 	Menu();
 	void addOption(std::string);
 	void down();
+	std::string selection();
 	void up();
+
+
 	void render(ShaderProgram*);
 };

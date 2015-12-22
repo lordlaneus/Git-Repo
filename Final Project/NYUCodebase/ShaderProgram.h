@@ -19,7 +19,6 @@ class ShaderProgram {
 
 
 		void setInvert(bool);
-		void setLights(Vector position,Vector color);
 		void setAlpha(float);
         void setModelMatrix(const Matrix &matrix);
         void setProjectionMatrix(const Matrix &matrix);

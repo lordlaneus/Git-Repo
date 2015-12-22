@@ -6,8 +6,7 @@ public:
 
 	float x;
 	float y;
-	float z;
-	Vector(float x=0, float y=0, float z=0);
+	Vector(float x=0, float y=0);
 	float angle();
 	void clear();
 	float distance(Vector v);
@@ -19,18 +18,19 @@ public:
 
 	Vector operator* (const float f)
 	{
-		return Vector(f*x, f*y, f*z);
+		return Vector(f*x, f*y);
 	}
 	Vector operator/ (const float f)
 	{
-		return Vector(x/f, y/f, z/f);
+		return Vector(x/f, y/f);
 	}
 	Vector operator + (const Vector &v)
 	{
-		return Vector(x + v.x, y + v.y, z + v.z);
+		return Vector(x + v.x, y + v.y);
 	}
+	//TODO: implement += operator
 	Vector operator - (const Vector &v)
 	{
-		return Vector(x - v.x, y - v.y, z - v.z);
+		return Vector(x - v.x, y - v.y);
 	}
 };

@@ -30,7 +30,6 @@ Planet::Planet(Cluster* cluster, Sprite sprite, float x, float y, float size, fl
 	this->sprite = sprite;
 	position.x = x;
 	position.y = y;
-	on = false;
 	this->size = size;
 	this->density = density;
 
@@ -51,14 +50,10 @@ float Planet::mass()
 {
 	return size*density;
 }
-Vector Planet::getColor()
-{
-	return Vector(1, 1, 1);
-}
-
 void Planet::render(ShaderProgram *program){
 
-		float u = (float)(((int)sprite.index) % sprite.sheetW) / (float)sprite.sheetW;
+	//planets don't render themselves for effiecency
+		/*float u = (float)(((int)sprite.index) % sprite.sheetW) / (float)sprite.sheetW;
 		float v = (float)(((int)sprite.index) / sprite.sheetW) / (float)sprite.sheetH;
 		float spriteWidth = 1.0 / (float)sprite.sheetW;
 		float spriteHeight = 1.0 / (float)sprite.sheetH;
@@ -78,7 +73,6 @@ void Planet::render(ShaderProgram *program){
 
 
 		program->setModelMatrix(modelMatrix);
-		program->setLights(cluster->g->player->position, getColor());
 
 		//drawing
 		glUseProgram(program->programID);
@@ -97,5 +91,5 @@ void Planet::render(ShaderProgram *program){
 
 
 		glDisableVertexAttribArray(program->positionAttribute);
-		glDisableVertexAttribArray(program->texCoordAttribute);
+		glDisableVertexAttribArray(program->texCoordAttribute);*/
 	}

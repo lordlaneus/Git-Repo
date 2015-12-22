@@ -30,11 +30,10 @@ Enemy::Enemy(string line, Game* g)
 Enemy::Enemy(Game* g, Vector position) :
 Entity(g)
 {
-	size = Vector(5, 5);
-	baseSize = size;
-	maxHealth = startHealth;
-	health = maxHealth;
+	
+
 	this->position = position;
+	baseSize = Vector(baseWidth, baseHeight);
 	type = enemy;
 	home = position;
 	float coolDown = fireRate + Util::randFloat();
@@ -46,6 +45,30 @@ Entity(g)
 	
 	g->indicators.push_back(bar);
 
+}
+void Enemy::makeChaser()
+{
+	size = size*0.66;
+	circleRange = 0;
+	fireRate = -1;
+	damage = 20;
+	maxHealth = 10;
+	health = maxHealth;
+	speed = 40;
+	maxPuff = 1;
+	sprite.index = 4;
+}
+void Enemy::makeSpitter()
+{
+	damage = spitterDamage;
+	fireRate = spitterfireRate;
+	maxHealth = spitterHealth;
+	health = maxHealth;
+	bar->max = maxHealth;
+	maxPuff = spitterMaxPuff;
+	projectileSpeed = spitterProjectileSpeed;
+	speed = spitterSpeed;
+	float coolDown = fireRate + Util::randFloat();
 }
 void Enemy::die()
 {
@@ -90,7 +113,7 @@ void Enemy::update(float elapsed)
 	Entity::update(elapsed);
 	if (state == aggro)
 	{
-			coolDown -= elapsed;
+		coolDown -= elapsed;
 		float m = coolDown / fireRate;
 		float puff = m*(1 - maxPuff) / puffStart + maxPuff;
 		if (puff < 1)
@@ -118,6 +141,7 @@ void Enemy::update(float elapsed)
 	}
 	else if (state == circle)
 	{
+		coolDown -= elapsed;
 		float m = coolDown / fireRate;
 		float puff = m*(1 - maxPuff) / puffStart + maxPuff;
 		if (puff < 1)
@@ -179,7 +203,7 @@ void Enemy::update(float elapsed)
 			position = position + (position - p->position).normalize(p->size / 2 - (position.distance(p->position)));
 			if (g->cluster->checkCollision(position + velocity))
 			{
-				if (velocity.dot((position - p->position).rotate(M_PI/2)) > 0)
+				if (velocity.dot((position - p->position).rotate(M_PI/2)) > 0) 
 				{
 					velocity = (position - p->position).rotate(M_PI / 2).normalize(speed*landBonus);
 				}

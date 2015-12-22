@@ -13,6 +13,7 @@
 using namespace std;
 Game::Game()
 {
+	//load images
 	addSprite("logo", "resources\\logo.png", 0, 1, 1);
 	addSprite("fade", "resources\\fade.png", 0, 4, 4);
 	addSprite("gui", "resources\\gui.png", 0, 2, 2);
@@ -27,6 +28,7 @@ Game::Game()
 	addSprite("attack", "resources\\attack.png", 0, 8, 1);
 	addSprite("tutorial", "resources\\tutorial.png", 0, 4, 3);
 
+	//load sounds
 	addSound("startup", "resources\\startup.wav");
 	addSound("boop", "resources\\boop.wav");
 	addSound("hurt", "resources\\hurt.wav");
@@ -38,46 +40,46 @@ Game::Game()
 	addSound("zap", "resources\\zap.wav");
 	addMusic("bgm", "resources\\bgm.wav");
 
-	mainMenu.title = "Main Menu";
-	mainMenu.position = Vector(80, 70);
-	mainMenu.size = Vector(80, 80);
-	mainMenu.margin = 30;
-	mainMenu.fontSize = 6;
-	mainMenu.fontSpacing = 1;
+	//configure menus
+	mainMenu.title = "Main Menu"; 
 	mainMenu.font = sprites["font"];
-	mainMenu.lineSpacing = 10;
-	gameOverMenu = mainMenu;
+	mainMenu.visible = true;
 	mainMenu.showTitle = false;
 	mainMenu.addOption("Play");
-	mainMenu.addOption("Roam");
-	mainMenu.addOption("Help");
+	mainMenu.addOption("Options");
 	mainMenu.addOption("Quit");
+	currentMenu = &mainMenu;
 
-
-	gameOverMenu.position = Vector(80, 80);
-	gameOverMenu.size = Vector(80, 70);
-	gameOverMenu.visible = false;
-	gameOverMenu.bg = &sprites["msg"];
-	gameOverMenu.title = "Game Over";
-	gameOverMenu.showTitle = true;
-	gameOverMenu.margin = 25;
-	victoryMenu = gameOverMenu;
-	pauseMenu = gameOverMenu;
-	gameOverMenu.addOption("Retry");
-	gameOverMenu.addOption("Quit");
-	gui.push_back(&gameOverMenu);
+	playMenu.title = "Play Menu";
+	playMenu.showTitle = false;
+	playMenu.margin = 20;
+	playMenu.font = sprites["font"];
+	playMenu.addOption("Main Game");
+	playMenu.addOption("Free Roam");
+	playMenu.addOption("Tutorial");
+	playMenu.addOption("Back");
+	gui.push_back(&playMenu);
 
 	victoryMenu.title = "Victory!";
+	victoryMenu.font = sprites["font"];
 	victoryMenu.margin = 15;
 	victoryMenu.addOption("Restart");
 	victoryMenu.addOption("Explore");
 	gui.push_back(&victoryMenu);
 
 	pauseMenu.title = "Paused";
+	pauseMenu.margin = 15;
+	pauseMenu.font = sprites["font"];
 	pauseMenu.addOption("Resume");
 	pauseMenu.addOption("Quit");
 	gui.push_back(&pauseMenu);
 
+	gameOverMenu = pauseMenu;
+	gameOverMenu.title = "Game Over";
+	gui.push_back(&gameOverMenu);
+
+
+	//configure gui elements
 	health = Bar(sprites["bar"], 100, 25, 2);
 	health.position = Vector(3, 95);
 	gui.push_back(&health);
@@ -88,25 +90,26 @@ Game::Game()
 	gui.push_back(&energy);
 
 
-
 	msgBox = MsgBox(sprites["msg"], sprites["font"]);
 	gui.push_back(&msgBox);
 
-	enemyCount = TextDisplay(sprites["font"], "Enemeis Left:", 3, 1, 120, 95);
+	enemyCount = TextDisplay(sprites["font"], "Enemeis Left:","", 3, 1, 90, 95);
 	gui.push_back(&enemyCount);
 
-	compass.sprite = sprites["gui"];
+	timerDisplay = TextDisplay(sprites["font"], "Time:","", 3, 1, 110, 90);
+	gui.push_back(&timerDisplay);
+	
+	//In case I decide to revert to an earlier implementation of the compass
+/*	compass.sprite = sprites["gui"];
 	compass.position = Vector(80, 90);
 	compass.size = Vector(15, 15);
-	gui.push_back(&compass);
+	gui.push_back(&compass);*/
 
 	cursor.sprite = sprites["gui"][2];
 	cursor.size = Vector(4, 4);
 	gui.push_back(&cursor);
 
-	reset();
-	state = ready;
-
+	//configures particle emitter for fire effect
 	fireEmitter.sprite.index = 7;
 	fireEmitter.maxLifetime = 1;
 	fireEmitter.velocityDev.x = 20;
@@ -114,21 +117,35 @@ Game::Game()
 	fireEmitter.startSize = 5;
 	fireEmitter.endSize = 0;
 	fireEmitter.sprite = sprites["particles"];
+
+	reset();
+	state = ready;
+
 }
 void Game::reset()
 {
 
-	state = title;
+	state = title;//half the time reset() is called, the immediate next line sets state to something else, but whatever
+	currentMenu = &mainMenu;
+	timer = 0;
 	exploring = false;
-	gameOverMenu.visible = false;
 	health.visible = true;
 	energy.visible = true;
 	enemyCount.visible = true;
+	timerDisplay.position.x = 110;
+	timerDisplay.size ;
+	timerDisplay.visible = true;
+
+	//resets level
 	delete cluster;
 	cluster = new Cluster(this, 100, sprites["planet"]);
+	
+	//reset player
 	delete player;
 	player = new Player(this, sprites["player"]);
 
+
+	//clears gui elements
 	for (int i = 0; i < indicators.size(); i++)
 	{
 		delete indicators[i];
@@ -140,6 +157,8 @@ void Game::reset()
 	}
 	entities.clear();
 
+
+	//spawns enemies
 	for (int i = 0; i < enemySpitters; i++)
 	{
 		float dist = Util::randFloat()*(cluster->radius - 100) + 100;
@@ -147,7 +166,9 @@ void Game::reset()
 		Vector position(1, 1);
 		position.rotate(angle);
 		position.normalize(dist);
-		entities.push_back(new Enemy(this, position));
+		Enemy* e = new Enemy(this, position);
+		e->makeSpitter();
+		entities.push_back(e);
 	}
 	for (int i = 0; i < enemyChasers; i++)
 	{
@@ -157,15 +178,7 @@ void Game::reset()
 		position.rotate(angle);
 		position.normalize(dist);
 		Enemy* e = new Enemy(this, position);
-		e->size =e->size* .75;
-		e->circleRange = 0;
-		e->fireRate = -1;
-		e->damage = 15;
-		e->maxHealth = 10;
-		e->health = e->maxHealth;
-		e->speed = 40;
-		e->maxPuff = 1;
-		e->sprite.index = 4;
+		e->makeChaser();
 		entities.push_back(e);
 	}
 	for (int i = 0; i < enemyRollers; i++)
@@ -176,10 +189,6 @@ void Game::reset()
 		position.rotate(angle);
 		position.normalize(dist);
 		Roller* r = new Roller(this, position);
-		r->sprite.index = 3;
-		r->speed *= 5;
-		r->maxHealth = 20;
-		r->health = r->maxHealth;
 		entities.push_back(r);
 	}
 }
@@ -235,9 +244,220 @@ void Game::start(ShaderProgram *program)
 
 
 }
+
+void Game::addMusic(string name, const char* path)
+{
+	music[name] = Mix_LoadMUS(path);
+}
+void Game::addSound(string name, const char* path)
+{
+	sounds[name] = Mix_LoadWAV(path);
+}
+
+void Game::addSprite(string name, const char* path, int i, int w, int h)
+{
+	sprites[name] = Sprite(Util::loadImage(path), i, w, h);
+}
+void Game::killAll()
+{
+	for (int i = 0; i < entities.size(); i++)
+	{
+		entities[i]->active = false;
+	}
+}
+void Game::loadCluster(string path)
+{
+	ifstream file("resources\\" + path);
+	string line;
+	if (file.is_open())
+	{
+		getline(file, line);
+		if (line == "[GWC]")
+		{
+			killAll();
+			cluster = new Cluster(this, sprites["tutorial"]);
+			while (getline(file, line))
+			{
+				if (line.substr(0, 2) == "P:")
+				{
+					cluster->planets.push_back(Planet(line.substr(3), cluster, cluster->sprite));
+				}
+
+				else if (line.substr(0, 2) == "S:")
+				{
+					Planet p(line.substr(3), cluster, cluster->sprite);
+					p.type = Planet::star;
+					cluster->planets.push_back(p);
+
+				}
+				else if (line.substr(0, 2) == "E:")
+				{
+					entities.push_back(new Enemy(line.substr(3), this));
+				}
+			}
+		}
+	}
+
+
+}
+void Game::menuSelect()//I hate this function, but I'm not sure else I should implement this
+{
+	Menu* oldMenu = currentMenu;
+	if (currentMenu->title == "Main Menu")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			currentMenu = &playMenu;
+			playMenu.show();
+			currentMenu->visible = true;
+			break;
+		case 1:
+			break;
+		case 2:
+			state = done;
+			break;
+		}
+	}
+	else if (currentMenu->title == "Play Menu")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			reset();
+			exploring = false;
+			state = play;
+			msgBox.visible = false;
+			lastFrameTime = (float)SDL_GetTicks() / 1000;
+			break;
+		case 1:
+			reset();
+			exploring = true;
+			killAll();
+			state = play;
+			msgBox.visible = false;
+			lastFrameTime = (float)SDL_GetTicks() / 1000;
+			break;
+		case 2:
+			reset();
+			exploring = true;
+			loadCluster("tutorial.cluster");
+			state = play;
+			lastFrameTime = (float)SDL_GetTicks() / 1000;
+			break;
+		case 3:
+			currentMenu = &mainMenu;
+			currentMenu->visible = true;
+			break;
+
+		}
+	}
+	else if (currentMenu->title == "Paused")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			state = play;
+			break;
+		case 1:
+			reset();
+			break;
+		}
+	}
+	else if (currentMenu->title == "Game Over")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			currentMenu->visible = false;
+			reset();
+			state = play;
+			break;
+		case 1:
+			currentMenu->visible = false;
+			reset();
+		}
+	}
+	else if (currentMenu->title == "Victory!")
+	{
+		switch (currentMenu->selected)
+		{
+		case 0:
+			currentMenu->visible = false;
+			reset();
+			break;
+		case 1:
+			exploring = true;
+			currentMenu->visible = false;
+			state = play;
+		}
+	}
+	oldMenu->selected = 0;
+	oldMenu->visible = false;
+}
+void Game::pause()
+{
+	currentMenu = &pauseMenu;
+	pauseMenu.show();
+	playSound("boop");
+	state = menu;
+
+}
+void Game::playMusic(string name)
+{
+	Mix_PlayMusic(music[name], -1);
+}
+void Game::playSound(string name)
+{
+	Mix_PlayChannel(-1, sounds[name], 0);
+}
+
+
+
+
+void Game::showMsg(string msg, string subMsg1, string subMsg2, string subMsg3)
+{
+	msgBox.text = msg;
+	msgBox.subText1 = subMsg1;
+	msgBox.subText2 = subMsg2;
+	msgBox.subText3 = subMsg3;
+	msgBox.visible = true;
+	state = message;
+}
+void Game::triggerFire(Vector position)
+{
+	fireEmitter.position = position;
+	fireEmitter.velocity = Vector(0, 0);
+	fireEmitter.gravity = position;
+	fireEmitter.mass = .5;
+	fireEmitter.trigger();
+}
+void Game::triggerParticles(ParticleEmitter& pe, Vector position, Planet p, float speed)
+{
+	pe.position = (position*3+p.position) / 4;
+	pe.gravity = p.position;
+	pe.mass = p.mass();
+
+	pe.velocity = position - p.position;
+	pe.velocity.normalize(speed);
+
+	pe.trigger();
+}
+void Game::triggerDust(Vector position, Planet p, float speed)
+{
+	dustEmitter.position = position;
+	dustEmitter.gravity = p.position;
+	dustEmitter.mass = p.mass() / 2;
+
+	dustEmitter.velocity = position - p.position;
+	dustEmitter.velocity.normalize(speed);
+
+	dustEmitter.trigger(&p);
+}
+
 void Game::update(float elapsed)
 {
-	cluster->update(elapsed);
+	cluster->update(elapsed);//meaningless; clusters don't change
 	player->update(elapsed);
 	dustEmitter.update(elapsed);
 	fireEmitter.update(elapsed);
@@ -247,6 +467,7 @@ void Game::update(float elapsed)
 		health.visible = false;
 		energy.visible = false;
 		enemyCount.visible = false;
+		timerDisplay.visible = false;
 	}
 	health.current = player->health;
 	energy.current = player->energy;
@@ -276,15 +497,15 @@ void Game::update(float elapsed)
 		{
 			entities[i]->playerCollision(player);
 		}
-		
+
 	}
 	if (closest)
 	{
-		compass.direction = closest->position - compassReal;
+		//compass.direction = closest->position - compassReal;
 	}
 	else
 	{
-		compass.visible = false;
+		//compass.visible = false;
 	}
 
 	for (int i = 0; i < indicators.size(); i++)
@@ -296,13 +517,24 @@ void Game::update(float elapsed)
 		gui[i]->update(elapsed);
 	}
 
-	enemyCount.text = "Enemies Left: " + to_string(enemiesLeft);
+	enemyCount.text = to_string(enemiesLeft);
 	if (enemiesLeft == 0 && !exploring)
 	{
+		timerDisplay.size *= 2;
+		timerDisplay.position.x = 80;
+		timerDisplay.centered = true;
+		exploring = true;
 		currentMenu = &victoryMenu;
 		victoryMenu.show();
-		state = Game::victory;
+		state = Game::menu;
 	}
+	if (!exploring)
+	{
+		timer += elapsed;
+	}
+	string text = to_string((int)(timer)) + '.';
+	text += to_string(((int)(timer * 10)) % 10);
+	timerDisplay.text = text;
 
 
 }
@@ -357,15 +589,20 @@ void Game::renderBG(ShaderProgram *program)
 void Game::renderGui(ShaderProgram* program)
 {
 	glUseProgram(program->programID);
-	if (state == title)
+	if (state == menu)
 	{
-		currentMenu = &mainMenu;
+		GLuint font = sprites["font"].texture;
+		currentMenu->render(program);
+	}
+	else if(state == title)
+	{
+
 		renderBG(program);
 		GLuint font = sprites["font"].texture;
 		Util::drawText(program, font, "Gravity Well", 80, 80, 10, 2);
-		mainMenu.render(program);
+		currentMenu->render(program);
 	}
-	else if (state != done)
+	if (state != done && state!=title)
 	{
 		for (int i = 0; i < gui.size(); i++)
 		{
@@ -420,196 +657,4 @@ void Game::render(ShaderProgram *program)
 			}
 		}
 	}
-}
-void Game::addMusic(string name, const char* path)
-{
-	music[name] = Mix_LoadMUS(path);
-}
-void Game::addSound(string name, const char* path)
-{
-	sounds[name] = Mix_LoadWAV(path);
-}
-
-void Game::addSprite(string name, const char* path, int i, int w, int h)
-{
-	sprites[name] = Sprite(Util::loadImage(path), i, w, h);
-}
-void Game::killAll()
-{
-	for (int i = 0; i < entities.size(); i++)
-	{
-		entities[i]->active = false;
-	}
-}
-void Game::loadCluster(string path)
-{
-	ifstream file("resources\\" + path);
-	string line;
-	if (file.is_open())
-	{
-		getline(file, line);
-		if (line == "[GWC]")
-		{
-			killAll();
-			cluster = new Cluster(this, sprites["tutorial"]);
-			while (getline(file, line))
-			{
-				if (line.substr(0, 2) == "P:")
-				{
-					cluster->planets.push_back(Planet(line.substr(3), cluster, cluster->sprite));
-				}
-
-				else if (line.substr(0, 2) == "S:")
-				{
-					Planet p(line.substr(3), cluster, cluster->sprite);
-					p.type = Planet::star;
-					cluster->planets.push_back(p);
-
-				}
-				else if (line.substr(0, 2) == "E:")
-				{
-					entities.push_back(new Enemy(line.substr(3), this));
-				}
-			}
-			state = play;
-		}
-	}
-
-
-}
-void Game::menuSelect()//I hate this function, but I'm not sure else I should implement this
-{
-	if (currentMenu->title == "Main Menu")
-	{
-		switch (currentMenu->selected)
-		{
-		case 0:
-			reset();
-			exploring = false;
-			state = play;
-			msgBox.visible = false;
-			lastFrameTime = (float)SDL_GetTicks() / 1000;
-			break;
-		case 1:
-			reset();
-			exploring = true;
-			killAll();
-			state = play;
-			msgBox.visible = false;
-			lastFrameTime = (float)SDL_GetTicks() / 1000;
-			break;
-		case 2:
-			reset();
-			exploring = true;
-			loadCluster("tutorial.cluster");
-			break;
-		case 3:
-			state = done;
-			break;
-		}
-	}
-	else if (currentMenu->title == "Paused")
-	{
-		switch (currentMenu->selected)
-		{
-		case 0:
-			state = play;
-			currentMenu->visible = false;
-			break;
-		case 1:
-			state = title;
-			currentMenu->visible = false;
-			break;
-		}
-	}
-	else if (currentMenu->title == "Game Over")
-	{
-		switch (currentMenu->selected)
-		{
-		case 0:
-			currentMenu->visible = false;
-			reset();
-			state = play;
-			break;
-		case 1:
-			state = title;
-			currentMenu->visible = false;
-			reset();
-		}
-	}
-	else if (currentMenu->title == "Victory!")
-	{
-		switch (currentMenu->selected)
-		{
-		case 0:
-			state = title;
-			currentMenu->visible = false;
-			reset();
-			break;
-		case 1:
-			exploring = true;
-			currentMenu->visible = false;
-			state = play;
-		}
-	}
-	currentMenu->selected = 0;
-}
-void Game::pause()
-{
-	currentMenu = &pauseMenu;
-	pauseMenu.show();
-	playSound("boop");
-	state = paused;
-
-}
-void Game::playMusic(string name)
-{
-	Mix_PlayMusic(music[name], -1);
-}
-void Game::playSound(string name)
-{
-	Mix_PlayChannel(-1, sounds[name], 0);
-}
-
-
-
-
-void Game::showMsg(string msg, string subMsg1, string subMsg2, string subMsg3)
-{
-	msgBox.text = msg;
-	msgBox.subText1 = subMsg1;
-	msgBox.subText2 = subMsg2;
-	msgBox.subText3 = subMsg3;
-	msgBox.visible = true;
-	state = message;
-}
-void Game::triggerFire(Vector position)
-{
-	fireEmitter.position = position;
-	fireEmitter.velocity = Vector(0, 0);
-	fireEmitter.gravity = position;
-	fireEmitter.mass = .5;
-	fireEmitter.trigger();
-}
-void Game::triggerParticles(ParticleEmitter& pe, Vector position, Planet p, float speed)
-{
-	pe.position = (position*3+p.position) / 4;
-	pe.gravity = p.position;
-	pe.mass = p.mass();
-
-	pe.velocity = position - p.position;
-	pe.velocity.normalize(speed);
-
-	pe.trigger();
-}
-void Game::triggerDust(Vector position, Planet p, float speed)
-{
-	dustEmitter.position = position;
-	dustEmitter.gravity = p.position;
-	dustEmitter.mass = p.mass() / 2;
-
-	dustEmitter.velocity = position - p.position;
-	dustEmitter.velocity.normalize(speed);
-
-	dustEmitter.trigger(&p);
 }

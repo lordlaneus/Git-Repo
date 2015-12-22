@@ -26,7 +26,7 @@ public:
 	Planet(Cluster*,Sprite, float=0, float=0, float=1, float=2);
 	
 	float mass();
-	Vector getColor();
+
 	void render(ShaderProgram*);
 	bool validIn(Cluster);
 

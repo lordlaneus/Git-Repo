@@ -37,7 +37,7 @@ void Hook::update(float elapsed)
 	else if (state == recoiling)
 	{
 		velocity =player->position - position;
-		if (velocity.length() < 5)
+		if (velocity.length() < 1)//one unit is close enough
 		{
 			state = away;
 		}

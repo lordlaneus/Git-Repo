@@ -18,13 +18,14 @@ class Game;
 class Planet;
 class Player: public Entity{
 public:
-
+	const float compassCost = 10;
 	const float chargeCost = 40;
 	const float deathTime = 1;
 	const float energyRegen = 25;
 	const float heavyGrappleCost = 25;
 	const float jumpPower = 50;
 	const float maxEnergy = 100;
+	const float maxHealth = 100;
 	const float shiftCost = 75;
 	const float walkSpeed = 75;
 	const float zipCost = 40;
@@ -33,6 +34,7 @@ public:
 	bool charging;
 	float chargeTime;
 	Animation deathAnim;
+	bool draining;
 	bool dying;
 	float energy = 100;
 	Hook* hook;
@@ -41,8 +43,8 @@ public:
 	Planet* planet;
 	bool shiftDown = false;
 	bool shifted = false;
-	float shiftingTime;
-	bool onGround;
+	float shiftingTime;//only used for the shifting animation
+	bool onGround = false;
 	Animation walkAnim;
 	KeyStack wasd;
 	float walking;
@@ -55,6 +57,7 @@ public:
 
 	
 	Player();
+	~Player();
 	Player(Game *g, Sprite);
 
 	void attack(Vector);

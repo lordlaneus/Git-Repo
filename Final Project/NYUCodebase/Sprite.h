@@ -29,7 +29,7 @@ public:
 		sheetH = h;
 		sheetW = w;
 	}
-	void render(ShaderProgram*, float, float, float, float, float = 0, int = -1, bool = false);
+	void render(ShaderProgram*, float x, float y, float w, float h, float rotaion = 0, int index = -1, bool fliped = false);
 
 	Sprite operator[](int);
 };

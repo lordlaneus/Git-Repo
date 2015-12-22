@@ -132,10 +132,8 @@
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="Planet.h" />
-    <ClInclude Include="Level.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="ShaderProgram.h" />
-    <ClInclude Include="Texture.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>

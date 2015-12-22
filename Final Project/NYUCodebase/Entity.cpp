@@ -17,7 +17,9 @@ Entity::Entity(Game* g)
 }
 bool Entity::collides(Entity&e)
 {
-	if (!collides(e, cos(rotation), sin(rotation)))
+	//should be functionally identical to the single return statement
+	//but it's usefull for debbuging
+	/*if (!collides(e, cos(rotation), sin(rotation)))
 	{
 		return false;
 	}
@@ -32,9 +34,7 @@ bool Entity::collides(Entity&e)
 	if (!collides(e, sin(e.rotation), cos(e.rotation)))
 	{
 		return false;
-	}
-
-	int a = 5;
+	}*/
 	return (collides(e, cos(rotation), sin(rotation)) &&
 		collides(e, sin(rotation), cos(rotation))&&
 		collides(e, cos(e.rotation), sin(e.rotation)) &&
