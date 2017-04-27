@@ -1,0 +1,5 @@
+﻿  Util.cpp
+c:\users\jim\documents\git-repo\final project\nyucodebase\player.h(32): warning C4305: 'initializing': truncation from 'double' to 'const float'
+c:\users\jim\documents\git-repo\final project\nyucodebase\util.cpp(79): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+  NYUCodebase.vcxproj -> C:\Users\Jim\Documents\Git-Repo\Final Project\x64\Debug\Gravity Well.exe
+  NYUCodebase.vcxproj -> C:\Users\Jim\Documents\Git-Repo\Final Project\x64\Debug\Gravity Well.pdb (Partial PDB)

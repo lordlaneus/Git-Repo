@@ -7,7 +7,7 @@
 #include "Game.h"
 #include "Vector.h"
 #include "Util.h"
-#include <time.h>
+#include <ctime>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_image.h>

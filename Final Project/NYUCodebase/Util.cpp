@@ -9,11 +9,15 @@ float Util::randFloat()
 GLuint Util::loadImage(const char *path)
 {
 	SDL_Surface *surface = IMG_Load(path);
-
+	
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
-
+	if (textureID == 13)
+	{
+		string a = IMG_GetError();
+		string b = a;
+	}
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 
